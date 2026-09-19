@@ -2,4 +2,5 @@
 
 A Service Discovery Registry for AI Agents.
 
-See [docs/api.md](docs/api.md) for the endpoint design.
+- [Agent guide](docs/agent-guide.md) — register, discover skills, call another agent
+- [API](docs/api.md) — endpoint design

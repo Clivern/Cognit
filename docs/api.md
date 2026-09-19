@@ -1,8 +1,8 @@
 # Cognit API
 
-Cognit is a control plane for AI agents that speak the [A2A protocol](https://a2a-protocol.org/v1.0.0/specification/). A2A standardizes how you talk to an agent (Agent Card, messages, tasks). It does not standardize a registry. Cognit fills that gap: multi-tenant catalog, health, policy, and a gateway in front of A2A.
+Cognit is a control plane for AI agents that speak the [A2A protocol](https://a2a-protocol.org/v1.0.0/specification/). A2A standardizes how you talk to an agent (Agent Card, messages, tasks). It does not standardize a registry. Cognit fills that gap: workspace-scoped catalog, health, policy, and a gateway in front of A2A.
 
-A2A v1.0 already has a `tenant` field (path parameter on operations, optional on `AgentInterface`). Tenancy lives in the URL, not only a header.
+Isolation is a **workspace**. Catalog, health, intentions, KV, and A2A routing never cross that boundary. A2A v1.0 still names its routing key `tenant` on `AgentInterface` and as an operation path parameter — set that field to the workspace id.
 
 Base URL:
 
@@ -15,27 +15,27 @@ https://cognit.example.com
 | Control | Register, discover, health, policy |
 | Data | Speak A2A to a resolved agent |
 
-Auth on both planes: `Authorization: Bearer <token>`. Tenant is in the path. Optional `A2A-Version: 1.0` on data-plane calls.
+Auth on both planes: `Authorization: Bearer <token>`. Workspace is in the path. Optional `A2A-Version: 1.0` on data-plane calls.
 
 ---
 
-## 1. Tenancy and identity
+## 1. Workspaces and identity
 
 ```
-POST   /v1/tenants
-GET    /v1/tenants
-GET    /v1/tenants/{tenant}
-PATCH  /v1/tenants/{tenant}
-DELETE /v1/tenants/{tenant}
+POST   /v1/workspaces
+GET    /v1/workspaces
+GET    /v1/workspaces/{workspace}
+PATCH  /v1/workspaces/{workspace}
+DELETE /v1/workspaces/{workspace}
 
-POST   /v1/tenants/{tenant}/api-keys
-GET    /v1/tenants/{tenant}/api-keys
-DELETE /v1/tenants/{tenant}/api-keys/{key_id}
+POST   /v1/workspaces/{workspace}/api-keys
+GET    /v1/workspaces/{workspace}/api-keys
+DELETE /v1/workspaces/{workspace}/api-keys/{key_id}
 
-GET    /v1/tenants/{tenant}/principals/me
+GET    /v1/workspaces/{workspace}/principals/me
 ```
 
-A token is scoped to one tenant. Cross-tenant calls fail closed (`404`, not `403`) so tenant IDs stay private.
+A token is scoped to one workspace. Cross-workspace calls fail closed (`404`, not `403`) so workspace IDs stay private.
 
 ---
 
@@ -44,21 +44,21 @@ A token is scoped to one tenant. Cross-tenant calls fail closed (`404`, not `403
 Agents publish an A2A **Agent Card**. The registry stores the card plus runtime metadata (address, lease, health).
 
 ```
-PUT    /v1/tenants/{tenant}/catalog/agents/{agent}
-GET    /v1/tenants/{tenant}/catalog/agents/{agent}
-DELETE /v1/tenants/{tenant}/catalog/agents/{agent}
-GET    /v1/tenants/{tenant}/catalog/agents
+PUT    /v1/workspaces/{workspace}/catalog/agents/{agent}
+GET    /v1/workspaces/{workspace}/catalog/agents/{agent}
+DELETE /v1/workspaces/{workspace}/catalog/agents/{agent}
+GET    /v1/workspaces/{workspace}/catalog/agents
        ?skill=invoice.extract
        &tag=finance
        &status=passing
        &capability=streaming
 
-GET    /v1/tenants/{tenant}/catalog/agents/{agent}/card
-PUT    /v1/tenants/{tenant}/catalog/agents/{agent}/card
+GET    /v1/workspaces/{workspace}/catalog/agents/{agent}/card
+PUT    /v1/workspaces/{workspace}/catalog/agents/{agent}/card
 
-GET    /v1/tenants/{tenant}/catalog/skills
-GET    /v1/tenants/{tenant}/catalog/skills/{skill}
-GET    /v1/tenants/{tenant}/catalog/skills/{skill}/agents
+GET    /v1/workspaces/{workspace}/catalog/skills
+GET    /v1/workspaces/{workspace}/catalog/skills/{skill}
+GET    /v1/workspaces/{workspace}/catalog/skills/{skill}/agents
 ```
 
 `PUT .../agents/{agent}` registers the agent. Body is the Agent Card plus instance info:
@@ -113,19 +113,19 @@ GET    /v1/tenants/{tenant}/catalog/skills/{skill}/agents
 Workers talk to a local or cluster agent endpoint, not the full catalog UI.
 
 ```
-PUT    /v1/tenants/{tenant}/agent/register
-PUT    /v1/tenants/{tenant}/agent/deregister/{agent}
+PUT    /v1/workspaces/{workspace}/agent/register
+PUT    /v1/workspaces/{workspace}/agent/deregister/{agent}
 
-PUT    /v1/tenants/{tenant}/agent/instances/{instance}
-DELETE /v1/tenants/{tenant}/agent/instances/{instance}
+PUT    /v1/workspaces/{workspace}/agent/instances/{instance}
+DELETE /v1/workspaces/{workspace}/agent/instances/{instance}
 
-PUT    /v1/tenants/{tenant}/agent/instances/{instance}/renew
-GET    /v1/tenants/{tenant}/agent/instances/{instance}
+PUT    /v1/workspaces/{workspace}/agent/instances/{instance}/renew
+GET    /v1/workspaces/{workspace}/agent/instances/{instance}
 
-POST   /v1/tenants/{tenant}/sessions
-GET    /v1/tenants/{tenant}/sessions/{session}
-PUT    /v1/tenants/{tenant}/sessions/{session}/renew
-DELETE /v1/tenants/{tenant}/sessions/{session}
+POST   /v1/workspaces/{workspace}/sessions
+GET    /v1/workspaces/{workspace}/sessions/{session}
+PUT    /v1/workspaces/{workspace}/sessions/{session}/renew
+DELETE /v1/workspaces/{workspace}/sessions/{session}
 ```
 
 Registration is lease-based. Miss the TTL and the instance is marked critical, then dropped from discovery.
@@ -135,19 +135,19 @@ Registration is lease-based. Miss the TTL and the instance is marked critical, t
 ## 4. Control plane — health
 
 ```
-GET    /v1/tenants/{tenant}/health/agents
-GET    /v1/tenants/{tenant}/health/agents/{agent}
-GET    /v1/tenants/{tenant}/health/agents/{agent}/instances/{instance}
+GET    /v1/workspaces/{workspace}/health/agents
+GET    /v1/workspaces/{workspace}/health/agents/{agent}
+GET    /v1/workspaces/{workspace}/health/agents/{agent}/instances/{instance}
 
-PUT    /v1/tenants/{tenant}/health/checks/{check}
-DELETE /v1/tenants/{tenant}/health/checks/{check}
-POST   /v1/tenants/{tenant}/health/checks/{check}/pass
-POST   /v1/tenants/{tenant}/health/checks/{check}/warn
-POST   /v1/tenants/{tenant}/health/checks/{check}/fail
+PUT    /v1/workspaces/{workspace}/health/checks/{check}
+DELETE /v1/workspaces/{workspace}/health/checks/{check}
+POST   /v1/workspaces/{workspace}/health/checks/{check}/pass
+POST   /v1/workspaces/{workspace}/health/checks/{check}/warn
+POST   /v1/workspaces/{workspace}/health/checks/{check}/fail
 
-GET    /v1/tenants/{tenant}/health/state/passing
-GET    /v1/tenants/{tenant}/health/state/warning
-GET    /v1/tenants/{tenant}/health/state/critical
+GET    /v1/workspaces/{workspace}/health/state/passing
+GET    /v1/workspaces/{workspace}/health/state/warning
+GET    /v1/workspaces/{workspace}/health/state/critical
 ```
 
 Checks that matter for agents:
@@ -164,7 +164,7 @@ Checks that matter for agents:
 A2A’s own discovery story is a curated registry with an unspecified API. This is that API.
 
 ```
-GET    /v1/tenants/{tenant}/discover
+GET    /v1/workspaces/{workspace}/discover
        ?skill=invoice.extract
        &tags=finance
        &input_mode=application/pdf
@@ -172,7 +172,7 @@ GET    /v1/tenants/{tenant}/discover
        &passing=true
        &limit=5
 
-POST   /v1/tenants/{tenant}/discover/resolve
+POST   /v1/workspaces/{workspace}/discover/resolve
 ```
 
 Resolve body:
@@ -188,7 +188,7 @@ Resolve body:
 }
 ```
 
-Response is the card the caller should use, with `supportedInterfaces[0].url` pointed at Cognit’s gateway (not the raw pod IP), plus the tenant key A2A expects:
+Response is the card the caller should use, with `supportedInterfaces[0].url` pointed at Cognit’s gateway (not the raw pod IP). A2A’s `tenant` field is the workspace id:
 
 ```json
 {
@@ -197,7 +197,7 @@ Response is the card the caller should use, with `supportedInterfaces[0].url` po
   "card": {
     "supportedInterfaces": [
       {
-        "url": "https://cognit.example.com/v1/tenants/acme/a2a/agents/invoice-extractor",
+        "url": "https://cognit.example.com/v1/workspaces/acme/a2a/agents/invoice-extractor",
         "protocolBinding": "HTTP+JSON",
         "protocolVersion": "1.0",
         "tenant": "acme"
@@ -210,10 +210,10 @@ Response is the card the caller should use, with `supportedInterfaces[0].url` po
 Saved queries:
 
 ```
-PUT    /v1/tenants/{tenant}/query/{name}
-GET    /v1/tenants/{tenant}/query/{name}
-DELETE /v1/tenants/{tenant}/query/{name}
-GET    /v1/tenants/{tenant}/query/{name}/execute
+PUT    /v1/workspaces/{workspace}/query/{name}
+GET    /v1/workspaces/{workspace}/query/{name}
+DELETE /v1/workspaces/{workspace}/query/{name}
+GET    /v1/workspaces/{workspace}/query/{name}/execute
 ```
 
 ---
@@ -223,12 +223,12 @@ GET    /v1/tenants/{tenant}/query/{name}/execute
 Who may call whom.
 
 ```
-PUT    /v1/tenants/{tenant}/intentions
-GET    /v1/tenants/{tenant}/intentions
-GET    /v1/tenants/{tenant}/intentions/{id}
-DELETE /v1/tenants/{tenant}/intentions/{id}
+PUT    /v1/workspaces/{workspace}/intentions
+GET    /v1/workspaces/{workspace}/intentions
+GET    /v1/workspaces/{workspace}/intentions/{id}
+DELETE /v1/workspaces/{workspace}/intentions/{id}
 
-POST   /v1/tenants/{tenant}/intentions/check
+POST   /v1/workspaces/{workspace}/intentions/check
 ```
 
 ```json
@@ -239,24 +239,24 @@ POST   /v1/tenants/{tenant}/intentions/check
 }
 ```
 
-`POST .../intentions/check` is what the gateway calls on every A2A request. Default deny across tenants. Default deny across agents inside a tenant unless an intention exists.
+`POST .../intentions/check` is what the gateway calls on every A2A request. Default deny across workspaces. Default deny across agents inside a workspace unless an intention exists.
 
 ---
 
 ## 7. Control plane — KV, watches, events
 
 ```
-GET    /v1/tenants/{tenant}/kv/{key}
-PUT    /v1/tenants/{tenant}/kv/{key}
-DELETE /v1/tenants/{tenant}/kv/{key}
-GET    /v1/tenants/{tenant}/kv?prefix=agents/invoice-extractor/
+GET    /v1/workspaces/{workspace}/kv/{key}
+PUT    /v1/workspaces/{workspace}/kv/{key}
+DELETE /v1/workspaces/{workspace}/kv/{key}
+GET    /v1/workspaces/{workspace}/kv?prefix=agents/invoice-extractor/
 
-GET    /v1/tenants/{tenant}/watch/catalog?index={index}
-GET    /v1/tenants/{tenant}/watch/health?index={index}
-GET    /v1/tenants/{tenant}/watch/kv/{key}?index={index}
+GET    /v1/workspaces/{workspace}/watch/catalog?index={index}
+GET    /v1/workspaces/{workspace}/watch/health?index={index}
+GET    /v1/workspaces/{workspace}/watch/kv/{key}?index={index}
 
-PUT    /v1/tenants/{tenant}/event/{name}
-GET    /v1/tenants/{tenant}/event/{name}
+PUT    /v1/workspaces/{workspace}/event/{name}
+GET    /v1/workspaces/{workspace}/event/{name}
 ```
 
 Use KV for model pins, prompt refs, and feature flags — not secrets. Blocking `index` watches let agents long-poll and hot-reload cards and config.
@@ -265,11 +265,11 @@ Use KV for model pins, prompt refs, and feature flags — not secrets. Blocking 
 
 ## 8. Data plane — A2A well-known cards
 
-A2A requires a card at `/.well-known/agent-card.json`. In a multi-tenant registry you host per-agent cards, and optionally a registry card.
+A2A requires a card at `/.well-known/agent-card.json`. In a workspace-scoped registry you host per-agent cards, and optionally a registry card.
 
 ```
-GET  /v1/tenants/{tenant}/agents/{agent}/.well-known/agent-card.json
-GET  /v1/tenants/{tenant}/agents/{agent}/extendedAgentCard
+GET  /v1/workspaces/{workspace}/agents/{agent}/.well-known/agent-card.json
+GET  /v1/workspaces/{workspace}/agents/{agent}/extendedAgentCard
 
 GET  /.well-known/agent-card.json
 ```
@@ -279,7 +279,7 @@ The last one is Cognit itself (directory / router agent). Per-agent cards are wh
 If you need a public hostname per agent:
 
 ```
-GET  https://{agent}.{tenant}.cognit.example.com/.well-known/agent-card.json
+GET  https://{agent}.{workspace}.cognit.example.com/.well-known/agent-card.json
 ```
 
 That still resolves to the same card, with `supportedInterfaces` aimed at the gateway.
@@ -288,29 +288,29 @@ That still resolves to the same card, with `supportedInterfaces` aimed at the ga
 
 ## 9. Data plane — A2A HTTP+JSON
 
-Official A2A v1.0 REST bindings, namespaced by tenant and agent. `tenant` as a path param is what the spec already describes.
+Official A2A v1.0 REST bindings, namespaced by workspace and agent. When forwarding, set A2A’s `tenant` path/header value to the workspace id.
 
 ```
-POST   /v1/tenants/{tenant}/a2a/agents/{agent}/message:send
-POST   /v1/tenants/{tenant}/a2a/agents/{agent}/message:stream
+POST   /v1/workspaces/{workspace}/a2a/agents/{agent}/message:send
+POST   /v1/workspaces/{workspace}/a2a/agents/{agent}/message:stream
 
-GET    /v1/tenants/{tenant}/a2a/agents/{agent}/tasks
-GET    /v1/tenants/{tenant}/a2a/agents/{agent}/tasks/{id}
-POST   /v1/tenants/{tenant}/a2a/agents/{agent}/tasks/{id}:cancel
-POST   /v1/tenants/{tenant}/a2a/agents/{agent}/tasks/{id}:subscribe
+GET    /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks
+GET    /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks/{id}
+POST   /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks/{id}:cancel
+POST   /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks/{id}:subscribe
 
-POST   /v1/tenants/{tenant}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs
-GET    /v1/tenants/{tenant}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs
-GET    /v1/tenants/{tenant}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs/{configId}
-DELETE /v1/tenants/{tenant}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs/{configId}
+POST   /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs
+GET    /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs
+GET    /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs/{configId}
+DELETE /v1/workspaces/{workspace}/a2a/agents/{agent}/tasks/{id}/pushNotificationConfigs/{configId}
 
-GET    /v1/tenants/{tenant}/a2a/agents/{agent}/extendedAgentCard
+GET    /v1/workspaces/{workspace}/a2a/agents/{agent}/extendedAgentCard
 ```
 
 JSON-RPC binding, same prefix, one POST:
 
 ```
-POST   /v1/tenants/{tenant}/a2a/agents/{agent}
+POST   /v1/workspaces/{workspace}/a2a/agents/{agent}
 ```
 
 Methods: `SendMessage`, `SendStreamingMessage`, `GetTask`, `ListTasks`, `CancelTask`, `SubscribeToTask`, `CreateTaskPushNotificationConfig`, `GetTaskPushNotificationConfig`, `ListTaskPushNotificationConfigs`, `DeleteTaskPushNotificationConfig`, `GetExtendedAgentCard`.
@@ -330,11 +330,11 @@ The gateway:
 Callers often do not know the agent name. They know a skill.
 
 ```
-POST   /v1/tenants/{tenant}/a2a/skills/{skill}/message:send
-POST   /v1/tenants/{tenant}/a2a/skills/{skill}/message:stream
-GET    /v1/tenants/{tenant}/a2a/skills/{skill}/tasks/{id}
-POST   /v1/tenants/{tenant}/a2a/skills/{skill}/tasks/{id}:cancel
-POST   /v1/tenants/{tenant}/a2a/skills/{skill}/tasks/{id}:subscribe
+POST   /v1/workspaces/{workspace}/a2a/skills/{skill}/message:send
+POST   /v1/workspaces/{workspace}/a2a/skills/{skill}/message:stream
+GET    /v1/workspaces/{workspace}/a2a/skills/{skill}/tasks/{id}
+POST   /v1/workspaces/{workspace}/a2a/skills/{skill}/tasks/{id}:cancel
+POST   /v1/workspaces/{workspace}/a2a/skills/{skill}/tasks/{id}:subscribe
 ```
 
 `{skill}` is `invoice.extract`. Cognit resolves, checks intentions, picks a healthy instance, and forwards the A2A call. Task IDs stay sticky to the instance that accepted the first message.
@@ -348,21 +348,21 @@ GET    /v1/status/leader
 GET    /v1/status/peers
 GET    /v1/health
 
-GET    /v1/tenants/{tenant}/datacenters
-GET    /v1/tenants/{tenant}/nodes
-GET    /v1/tenants/{tenant}/metrics
+GET    /v1/workspaces/{workspace}/datacenters
+GET    /v1/workspaces/{workspace}/nodes
+GET    /v1/workspaces/{workspace}/metrics
 ```
 
-`GET /v1/health` is process liveness and is not tenant-scoped.
+`GET /v1/health` is process liveness and is not workspace-scoped.
 
 ---
 
 ## Request shape
 
-Every tenant-scoped call:
+Every workspace-scoped call:
 
 ```
-Authorization: Bearer <tenant-scoped token>
+Authorization: Bearer <workspace-scoped token>
 A2A-Version: 1.0
 Content-Type: application/json
 ```
@@ -370,7 +370,7 @@ Content-Type: application/json
 A2A send through the gateway:
 
 ```http
-POST /v1/tenants/acme/a2a/agents/invoice-extractor/message:send HTTP/1.1
+POST /v1/workspaces/acme/a2a/agents/invoice-extractor/message:send HTTP/1.1
 Authorization: Bearer ...
 A2A-Version: 1.0
 Content-Type: application/json
@@ -391,7 +391,7 @@ Content-Type: application/json
 
 Thin slice that is already a useful A2A core:
 
-1. `PUT/GET/DELETE /v1/tenants/{tenant}/catalog/agents/{agent}`
+1. `PUT/GET/DELETE /v1/workspaces/{workspace}/catalog/agents/{agent}`
 2. `PUT .../agent/instances/{instance}/renew` (TTL)
 3. `GET .../discover?skill=`
 4. `GET .../agents/{agent}/.well-known/agent-card.json`
@@ -400,4 +400,4 @@ Thin slice that is already a useful A2A core:
 
 KV, watches, saved queries, and skill-addressed routing come after that.
 
-A2A’s job is the card plus message and task verbs. Cognit’s job is who is registered, who is healthy, who is allowed to call, and which instance gets the RPC — with tenant as a hard path boundary.
+A2A’s job is the card plus message and task verbs. Cognit’s job is who is registered, who is healthy, who is allowed to call, and which instance gets the RPC — with workspace as a hard path boundary.
