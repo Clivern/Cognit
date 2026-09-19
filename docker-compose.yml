@@ -1,0 +1,92 @@
+name: cognit
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-cognit}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cognit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  migrate:
+    image: ${COGNIT_IMAGE:-registry.digitalocean.com/cognit/cognit:main}
+    restart: "no"
+    command: ["migrate", "up", "-c", "/app/configs/config.yml"]
+    environment:
+      COGNIT_SERVER_URL: ${COGNIT_SERVER_URL:-http://localhost}
+      COGNIT_DATABASE_HOST: postgres
+      COGNIT_DATABASE_PORT: "5432"
+      COGNIT_DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
+      COGNIT_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
+      COGNIT_AI_QDRANT_HOST: qdrant
+      COGNIT_AI_QDRANT_PORT: "6334"
+      COGNIT_LOCAL_PATH: /app/var/data
+    volumes:
+      - ./etc/config/config.yml:/app/configs/config.yml:ro
+      - cognit_data:/app/var
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+  cognit:
+    image: ${COGNIT_IMAGE:-registry.digitalocean.com/cognit/cognit:main}
+    restart: unless-stopped
+    command: ["server", "-c", "/app/configs/config.yml"]
+    environment:
+      COGNIT_SERVER_URL: ${COGNIT_SERVER_URL:-http://localhost}
+      COGNIT_DATABASE_HOST: postgres
+      COGNIT_DATABASE_PORT: "5432"
+      COGNIT_DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
+      COGNIT_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
+      COGNIT_AI_QDRANT_HOST: qdrant
+      COGNIT_AI_QDRANT_PORT: "6334"
+      COGNIT_LOCAL_PATH: /app/var/data
+      COGNIT_AI_OROUTE_API_KEY: ${COGNIT_AI_OROUTE_API_KEY:-}
+      COGNIT_RESEND_API_KEY: ${COGNIT_RESEND_API_KEY:-}
+      COGNIT_STRIPE_SECRET_KEY: ${COGNIT_STRIPE_SECRET_KEY:-}
+      COGNIT_STRIPE_WEBHOOK_SECRET: ${COGNIT_STRIPE_WEBHOOK_SECRET:-}
+    volumes:
+      - ./etc/config/config.yml:/app/configs/config.yml:ro
+      - cognit_data:/app/var
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    volumes:
+      - ./etc/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - cognit
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  cognit_data:

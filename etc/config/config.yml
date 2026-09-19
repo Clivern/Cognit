@@ -1,0 +1,105 @@
+app:
+  name: ${COGNIT_SERVER_NAME:-Cognit}
+  mode: ${COGNIT_SERVER_MODE:-prod}
+  port: ${COGNIT_SERVER_PORT:-8000}
+  url: ${COGNIT_SERVER_URL:-http://localhost}
+  timeout: ${COGNIT_SERVER_TIMEOUT:-50}
+
+  metrics:
+    username: ${COGNIT_SERVER_PROM_METRICS_USERNAME:-admin}
+    secret: ${COGNIT_SERVER_PROM_METRICS_SECRET:-secret}
+
+  log:
+    level: ${COGNIT_SERVER_LOG_LEVEL:-info}
+    output: ${COGNIT_SERVER_LOG_OUTPUT:-stdout}
+    format: ${COGNIT_SERVER_LOG_FORMAT:-json}
+
+  mailer:
+    provider: ${COGNIT_MAILER_PROVIDER:-resend}
+    from: ${COGNIT_MAILER_FROM:-no_reply@cognit.com}
+    resend:
+      api_key: ${COGNIT_RESEND_API_KEY:-}
+
+  oauth:
+    github:
+      client_id: ${COGNIT_GITHUB_OAUTH_CLIENT_ID:-}
+      client_secret: ${COGNIT_GITHUB_OAUTH_CLIENT_SECRET:-}
+      redirect_url: ${COGNIT_GITHUB_OAUTH_REDIRECT_URL:-}
+
+  database:
+    rw:
+      driver: ${COGNIT_DATABASE_DRIVER:-postgres}
+      host: ${COGNIT_DATABASE_HOST:-postgres}
+      port: ${COGNIT_DATABASE_PORT:-5432}
+      username: ${COGNIT_DATABASE_USERNAME:-postgres}
+      password: ${COGNIT_DATABASE_PASSWORD:-postgres}
+      name: ${COGNIT_DATABASE_NAME:-cognit}
+      max_open_conns: ${COGNIT_DATABASE_MAX_OPEN_CONNS:-25}
+      max_idle_conns: ${COGNIT_DATABASE_MAX_IDLE_CONNS:-10}
+      conn_max_lifetime: ${COGNIT_DATABASE_CONN_MAX_LIFETIME:-300}
+    ro:
+    - driver: ${COGNIT_DATABASE_DRIVER:-postgres}
+      host: ${COGNIT_DATABASE_HOST:-postgres}
+      port: ${COGNIT_DATABASE_PORT:-5432}
+      username: ${COGNIT_DATABASE_USERNAME:-postgres}
+      password: ${COGNIT_DATABASE_PASSWORD:-postgres}
+      name: ${COGNIT_DATABASE_NAME:-cognit}
+      max_open_conns: ${COGNIT_DATABASE_MAX_OPEN_CONNS:-25}
+      max_idle_conns: ${COGNIT_DATABASE_MAX_IDLE_CONNS:-10}
+      conn_max_lifetime: ${COGNIT_DATABASE_CONN_MAX_LIFETIME:-300}
+
+  billing:
+    provider: ${COGNIT_BILLING_PROVIDER:-stripe}
+    secret_key: ${COGNIT_STRIPE_SECRET_KEY:-}
+    webhook_secret: ${COGNIT_STRIPE_WEBHOOK_SECRET:-}
+    tokens_per_usd: ${COGNIT_TOKENS_PER_USD:-20000}
+    urls:
+      checkout_success: ${COGNIT_STRIPE_CHECKOUT_SUCCESS_URL:-/billing/success}
+      checkout_cancel: ${COGNIT_STRIPE_CHECKOUT_CANCEL_URL:-/billing/cancel}
+      portal_return: ${COGNIT_STRIPE_PORTAL_RETURN_URL:-/billing}
+
+  storage:
+    provider: ${COGNIT_STORAGE_PROVIDER:-local}
+    s3:
+      bucket: ${COGNIT_S3_BUCKET:-cognit}
+      region: ${COGNIT_S3_REGION:-us-east-1}
+      endpoint: ${COGNIT_S3_ENDPOINT:-}
+      access_key_id: ${COGNIT_S3_ACCESS_KEY_ID:-}
+      secret_access_key: ${COGNIT_S3_SECRET_ACCESS_KEY:-}
+      use_path_style: ${COGNIT_S3_USE_PATH_STYLE:-false}
+      prefix: ${COGNIT_S3_PREFIX:-documents}
+    local:
+      path: ${COGNIT_LOCAL_PATH:-/app/var/data}
+
+  ai:
+    api_key: ${COGNIT_AI_OROUTE_API_KEY:-}
+    embed:
+      model: ${COGNIT_AI_OROUTE_EMBEDDING_MODEL:-openai/text-embedding-3-large}
+      qdb:
+        host: ${COGNIT_AI_QDRANT_HOST:-qdrant}
+        port: ${COGNIT_AI_QDRANT_PORT:-6334}
+        api_key: ${COGNIT_AI_QDRANT_API_KEY:-}
+        use_tls: ${COGNIT_AI_QDRANT_USE_TLS:-false}
+        vector_size: ${COGNIT_AI_QDRANT_VECTOR_SIZE:-1024}
+        pool_size: ${COGNIT_AI_QDRANT_POOL_SIZE:-3}
+    llm:
+      lite:
+        model: ${COGNIT_AI_LITE_LLM_MODEL:-cohere/command-r}
+      large:
+        model: ${COGNIT_AI_LARGE_LLM_MODEL:-openai/gpt-4o}
+
+  cache:
+    provider: ${COGNIT_CACHE_PROVIDER:-redis}
+    redis:
+      addr: ${COGNIT_REDIS_ADDR:-127.0.0.1:6379}
+      password: ${COGNIT_REDIS_PASSWORD:-}
+      db: ${COGNIT_REDIS_DB:-0}
+      pool_size: ${COGNIT_REDIS_POOL_SIZE:-10}
+      min_idle_conns: ${COGNIT_REDIS_MIN_IDLE_CONNS:-5}
+
+  broker:
+    provider: ${COGNIT_BROKER_PROVIDER:-nats}
+    nats:
+      url: ${COGNIT_BROKER_URL:-nats://127.0.0.1:4222}
+      name: ${COGNIT_BROKER_NAME:-cognit}
+      queue: ${COGNIT_BROKER_QUEUE:-cognit}

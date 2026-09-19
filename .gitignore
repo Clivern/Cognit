@@ -1,0 +1,52 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# dist dir
+dist
+
+!web/dist
+
+sync
+
+*.db
+
+config.test.yml
+coverage.html
+
+# Binary
+cognit
+
+# Documentation (clone from git@github.com:cognit/adoc.git)
+.ruff_cache/
+
+# Local commit helper
+commit
+
+# Local tunnel config (contains authtoken)
+ngrok.yml
+ngrok
+
+# GitHub App private key
+*.pem
+
+# Local GitHub webhook dumps
+events/*
+!events/.gitkeep
+.secrets
