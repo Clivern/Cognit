@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.33.5
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.113.1
-	github.com/aws/smithy-go v1.28.1
+	github.com/aws/smithy-go v1.28.2
 	github.com/drone/envsubst v1.0.3
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-playground/validator/v10 v10.30.4
@@ -19,7 +19,6 @@ require (
 	github.com/nats-io/nats.go v1.53.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/qdrant/go-client v1.19.2
-	github.com/redis/go-redis/v9 v9.22.0
 	github.com/resend/resend-go/v4 v4.6.0
 	github.com/rs/zerolog v1.35.1
 	github.com/samber/lo v1.53.0
@@ -30,7 +29,6 @@ require (
 	github.com/tmc/langchaingo v0.1.14
 	golang.org/x/crypto v0.57.0
 	google.golang.org/grpc v1.84.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -86,7 +84,6 @@ require (
 	gitlab.com/golang-commonmark/markdown v0.0.0-20211110145824-bf3e522c626a // indirect
 	gitlab.com/golang-commonmark/mdurl v0.0.0-20191124015652-932350d1cb84 // indirect
 	gitlab.com/golang-commonmark/puny v0.0.0-20191124015043-9f83538fa04f // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
