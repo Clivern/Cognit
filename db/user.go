@@ -19,6 +19,7 @@ const (
 	UserRoleBot        = "bot"
 	UserProviderLocal  = "local"
 	UserProviderGithub = "github"
+	UserProviderGoogle = "google"
 	UserLanguageEN     = "en"
 	UserLanguageFR     = "fr"
 	UserThemeDefault   = "default"
