@@ -62,19 +62,6 @@ app:
       checkout_cancel: ${COGNIT_STRIPE_CHECKOUT_CANCEL_URL:-/billing/cancel}
       portal_return: ${COGNIT_STRIPE_PORTAL_RETURN_URL:-/billing}
 
-  storage:
-    provider: ${COGNIT_STORAGE_PROVIDER:-local}
-    s3:
-      bucket: ${COGNIT_S3_BUCKET:-cognit}
-      region: ${COGNIT_S3_REGION:-us-east-1}
-      endpoint: ${COGNIT_S3_ENDPOINT:-}
-      access_key_id: ${COGNIT_S3_ACCESS_KEY_ID:-}
-      secret_access_key: ${COGNIT_S3_SECRET_ACCESS_KEY:-}
-      use_path_style: ${COGNIT_S3_USE_PATH_STYLE:-false}
-      prefix: ${COGNIT_S3_PREFIX:-documents}
-    local:
-      path: ${COGNIT_LOCAL_PATH:-/app/var/data}
-
   ai:
     api_key: ${COGNIT_AI_OROUTE_API_KEY:-}
     embed:

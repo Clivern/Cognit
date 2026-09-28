@@ -33,17 +33,12 @@ services:
       COGNIT_DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
       COGNIT_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
-      COGNIT_AI_QDRANT_HOST: qdrant
-      COGNIT_AI_QDRANT_PORT: "6334"
-      COGNIT_LOCAL_PATH: /app/var/data
     volumes:
       - ./etc/config/config.yml:/app/configs/config.yml:ro
       - cognit_data:/app/var
     depends_on:
       postgres:
         condition: service_healthy
-      qdrant:
-        condition: service_started
 
   cognit:
     image: ${COGNIT_IMAGE:-registry.digitalocean.com/cognit/cognit:main}
@@ -58,7 +53,6 @@ services:
       COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
       COGNIT_AI_QDRANT_HOST: qdrant
       COGNIT_AI_QDRANT_PORT: "6334"
-      COGNIT_LOCAL_PATH: /app/var/data
       COGNIT_AI_OROUTE_API_KEY: ${COGNIT_AI_OROUTE_API_KEY:-}
       COGNIT_RESEND_API_KEY: ${COGNIT_RESEND_API_KEY:-}
       COGNIT_STRIPE_SECRET_KEY: ${COGNIT_STRIPE_SECRET_KEY:-}
