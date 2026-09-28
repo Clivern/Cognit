@@ -55,5 +55,41 @@
       },
       "required": ["user_id", "session_id"]
     }
+  },
+  {
+    "id": "team.members.list",
+    "name": "User Directory",
+    "description": "List the people on a team.",
+    "arguments": {
+      "type": "object",
+      "properties": {"team_id": {"type": "string"}},
+      "required": ["team_id"]
+    }
+  },
+  {
+    "id": "team.invite.send",
+    "name": "User Directory",
+    "description": "Invite an email address onto a team.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "email": {"type": "string"},
+        "team_id": {"type": "string"}
+      },
+      "required": ["email", "team_id"]
+    }
+  },
+  {
+    "id": "team.member.remove",
+    "name": "User Directory",
+    "description": "Remove an email address from a team.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "email": {"type": "string"},
+        "team_id": {"type": "string"}
+      },
+      "required": ["email", "team_id"]
+    }
   }
 ]
