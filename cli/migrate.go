@@ -4,12 +4,9 @@
 package cli
 
 import (
-	"context"
-
 	"github.com/clivern/cognit/core"
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/migration"
-	"github.com/clivern/cognit/pkg/qdrant"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -63,25 +60,6 @@ var migrateUpCmd = &cobra.Command{
 		}
 
 		log.Info().Msg("Migration completed successfully")
-
-		client, err := qdrant.New()
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("Failed to connect to Qdrant")
-		}
-
-		defer client.Close()
-		log.Info().Msg("Qdrant client created successfully")
-
-		err = migration.EnsureCollections(context.Background(), client)
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("Failed to ensure Qdrant collections")
-		}
-
-		log.Info().Msg("Qdrant collections ensured successfully")
 	},
 }
 
