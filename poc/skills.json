@@ -91,5 +91,38 @@
       },
       "required": ["email", "team_id"]
     }
+  },
+  {
+    "id": "billing.renewal.get",
+    "name": "Billing",
+    "description": "Get the plan name and the date it renews for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "billing.plan.change",
+    "name": "Billing",
+    "description": "Switch a user to a different plan.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "user_id": {"type": "string"},
+        "plan": {"type": "string"}
+      },
+      "required": ["user_id", "plan"]
+    }
+  },
+  {
+    "id": "billing.plan.cancel",
+    "name": "Billing",
+    "description": "Cancel a user's plan at the end of the period.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
   }
 ]
