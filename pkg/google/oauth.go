@@ -112,3 +112,34 @@ func (o *OAuth) Exchange(ctx context.Context, code, state, expectedState string)
 
 	return &token, nil
 }
+
+// User fetches the authenticated Google user.
+func (o *OAuth) User(ctx context.Context, accessToken string) (*UserInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, OauthUserURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("google oauth user request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("google oauth user: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("google oauth user body: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("google oauth user: status %d: %s", resp.StatusCode, body)
+	}
+
+	var user UserInfo
+	if err := json.Unmarshal(body, &user); err != nil {
+		return nil, fmt.Errorf("google oauth user decode: %w", err)
+	}
+
+	return &user, nil
+}
