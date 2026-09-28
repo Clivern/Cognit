@@ -1,0 +1,36 @@
+[
+  {
+    "id": "user.profile.get",
+    "name": "User Directory",
+    "description": "Get the name, email, and role for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "user.profile.update",
+    "name": "User Directory",
+    "description": "Change the name or email for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "user_id": {"type": "string"},
+        "name": {"type": "string"},
+        "email": {"type": "string"}
+      },
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "user.password.reset",
+    "name": "User Directory",
+    "description": "Send a password reset link for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  }
+]
