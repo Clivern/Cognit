@@ -9,16 +9,12 @@ import (
 	"github.com/clivern/cognit/pkg/util"
 )
 
-const bytesPerGB = 1024 * 1024 * 1024
-
 // Usage provides workspace consumption helpers.
 type Usage struct{}
 
 // WorkspaceUsageMetrics is current workspace consumption for billing.
 type WorkspaceUsageMetrics struct {
 	WorkspaceMembers int64   `json:"workspaceMembers"`
-	DocumentsCount   int64   `json:"documentsCount"`
-	StorageGB        float64 `json:"storageGB"`
 	AITokens         int64   `json:"aiTokens"`
 	AICost           float64 `json:"aiCost"`
 }
@@ -26,7 +22,6 @@ type WorkspaceUsageMetrics struct {
 // UsageSnapshotDeps holds repositories needed to load workspace usage.
 type UsageSnapshotDeps struct {
 	WorkspaceUserRepository db.WorkspaceUserRepository
-	DocumentRepository      db.DocumentRepository
 	UsageRepository         db.UsageRepository
 }
 
@@ -40,29 +35,9 @@ func (u *Usage) MembersCount(workspaceUsers db.WorkspaceUserRepository, workspac
 	return workspaceUsers.CountByWorkspaceId(workspaceId)
 }
 
-// DocumentsCount returns the number of documents in a workspace.
-func (u *Usage) DocumentsCount(documents db.DocumentRepository, workspaceId db.Id) (int64, error) {
-	return documents.CountByWorkspaceId(workspaceId)
-}
-
-// StorageUsed returns total document storage in bytes for a workspace.
-func (u *Usage) StorageUsed(documents db.DocumentRepository, workspaceId db.Id) (int64, error) {
-	return documents.SumSizeByWorkspaceId(workspaceId)
-}
-
 // GetWorkspaceUsage returns all billing usage metrics for a workspace.
 func (u *Usage) GetWorkspaceUsage(deps UsageSnapshotDeps, workspaceId db.Id) (*WorkspaceUsageMetrics, error) {
 	members, err := u.MembersCount(deps.WorkspaceUserRepository, workspaceId)
-	if err != nil {
-		return nil, err
-	}
-
-	documents, err := u.DocumentsCount(deps.DocumentRepository, workspaceId)
-	if err != nil {
-		return nil, err
-	}
-
-	storageBytes, err := u.StorageUsed(deps.DocumentRepository, workspaceId)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +54,6 @@ func (u *Usage) GetWorkspaceUsage(deps UsageSnapshotDeps, workspaceId db.Id) (*W
 
 	return &WorkspaceUsageMetrics{
 		WorkspaceMembers: members,
-		DocumentsCount:   documents,
-		StorageGB:        float64(storageBytes) / bytesPerGB,
 		AITokens:         aiTokens,
 		AICost:           aiCost,
 	}, nil

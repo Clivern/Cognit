@@ -22,9 +22,7 @@ func NewStats(workspaces db.WorkspaceRepository, stats db.WorkspaceStatsReposito
 }
 
 // WorkspaceStatsResponse is workspace metrics shaped for API responses.
-type WorkspaceStatsResponse struct {
-	DocumentsStored int64 `json:"documentsStored"`
-}
+type WorkspaceStatsResponse struct{}
 
 // GetWorkspaceStats returns dashboard metrics for a workspace.
 func (s *Stats) GetWorkspaceStats(workspaceId db.Id) (*WorkspaceStatsResponse, error) {
@@ -36,12 +34,10 @@ func (s *Stats) GetWorkspaceStats(workspaceId db.Id) (*WorkspaceStatsResponse, e
 		return nil, ErrWorkspaceNotFound
 	}
 
-	stats, err := s.StatsRepository.GetByWorkspaceId(workspaceId)
+	_, err = s.StatsRepository.GetByWorkspaceId(workspaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &WorkspaceStatsResponse{
-		DocumentsStored: stats.DocumentsStored,
-	}, nil
+	return &WorkspaceStatsResponse{}, nil
 }

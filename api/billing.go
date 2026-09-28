@@ -75,7 +75,6 @@ func GetBillingUsageAction(w http.ResponseWriter, r *http.Request) {
 
 	usage, err := bm.GetBillingUsage(db.Id(workspaceId), module.UsageSnapshotDeps{
 		WorkspaceUserRepository: db.NewWorkspaceUserRepository(db.GetDB()),
-		DocumentRepository:      db.NewDocumentRepository(db.GetDB()),
 		UsageRepository:         db.NewUsageRepository(db.GetDB()),
 	})
 	if err != nil {

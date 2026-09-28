@@ -13,9 +13,7 @@ const UsageUnitTokens = "tokens"
 const UsageUnitNanoUSD = "nano_usd"
 
 // WorkspaceStats holds aggregate metrics for a workspace dashboard.
-type WorkspaceStats struct {
-	DocumentsStored int64
-}
+type WorkspaceStats struct{}
 
 // WorkspaceStatsRepository loads workspace dashboard metrics.
 type WorkspaceStatsRepository interface {
@@ -32,18 +30,6 @@ func NewWorkspaceStatsRepository(db *sql.DB) WorkspaceStatsRepository {
 }
 
 // GetByWorkspaceId returns a workspace stats by workspace id.
-func (r *WorkspaceStatsRepositoryPostgres) GetByWorkspaceId(workspaceId Id) (*WorkspaceStats, error) {
-	stats := &WorkspaceStats{}
-
-	err := r.db.QueryRow(
-		`SELECT COUNT(*)
-		FROM documents
-		WHERE workspace_id = $1`,
-		workspaceId.String(),
-	).Scan(&stats.DocumentsStored)
-	if err != nil {
-		return nil, err
-	}
-
-	return stats, nil
+func (r *WorkspaceStatsRepositoryPostgres) GetByWorkspaceId(_ Id) (*WorkspaceStats, error) {
+	return &WorkspaceStats{}, nil
 }

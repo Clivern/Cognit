@@ -60,10 +60,8 @@ type BillingWebhookResponse struct {
 
 // WorkspaceUsageLimits are the consumption caps shown on the billing page.
 type WorkspaceUsageLimits struct {
-	WorkspaceMembers int64   `json:"workspaceMembers"`
-	DocumentsCount   int64   `json:"documentsCount"`
-	StorageGB        float64 `json:"storageGB"`
-	AITokens         int64   `json:"aiTokens"`
+	WorkspaceMembers int64 `json:"workspaceMembers"`
+	AITokens         int64 `json:"aiTokens"`
 }
 
 // BillingUsageResponse is workspace usage and limits for the billing page.
@@ -75,8 +73,6 @@ type BillingUsageResponse struct {
 
 var workspaceUsageLimits = WorkspaceUsageLimits{
 	WorkspaceMembers: 3,
-	DocumentsCount:   100,
-	StorageGB:        5,
 }
 
 // NewBilling creates a billing module.
