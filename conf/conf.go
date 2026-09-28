@@ -22,7 +22,4 @@ const (
 
 	// MaxUploadBytes is the maximum multipart upload size.
 	MaxUploadBytes = 2 * 1024 * 1024
-
-	// DefaultSearchLimit is used when a knowledge search request omits limit.
-	DefaultSearchLimit = 10
 )

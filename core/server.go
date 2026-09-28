@@ -62,7 +62,7 @@ func SetupServer(Static embed.FS) http.Handler {
 		}
 	})
 	r.Get("/api/v1/me", api.GetMeAction) // current authenticated user
-	r.Group(func(r chi.Router) { // user profile
+	r.Group(func(r chi.Router) {         // user profile
 		r.Use(middleware.Protect(middleware.Config{Roles: []string{db.UserRoleAdmin, db.UserRoleRegular}}))
 		r.Get("/api/v1/action/profile", api.GetProfileAction)    // get user profile
 		r.Put("/api/v1/action/profile", api.UpdateProfileAction) // update user profile
@@ -119,19 +119,11 @@ func SetupServer(Static embed.FS) http.Handler {
 			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanUpdateWorkspaceBilling})).Post("/billing/portal", api.CreateBillingPortalAction)     // open Stripe customer portal
 		}
 
-		r.With(middleware.Protect(middleware.Config{Perm: module.CanGetWorkspace})).Get("/stats", api.GetWorkspaceStatsAction) // get workspace stats
-
 		r.Route("/audits", func(r chi.Router) {
 			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListWorkspaceAudits})).Get("/", api.ListWorkspaceAuditsAction)      // list audit events
 			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetWorkspaceAudit})).Get("/{auditId}", api.GetWorkspaceAuditAction) // get audit event
 		})
 
-		r.Route("/documents", func(r chi.Router) {
-			r.With(middleware.Protect(middleware.Config{Perm: module.CanListWorkspaceDocuments})).Get("/", api.ListDocumentsAction)                              // list knowledge documents
-			r.With(middleware.Protect(middleware.Config{Perm: module.CanQueryWorkspaceDocuments})).Post("/search", api.SearchDocumentsAction)                    // semantic document search
-			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanCreateWorkspaceDocument})).Post("/", api.UploadDocumentAction)               // upload knowledge document
-			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanDeleteWorkspaceDocument})).Delete("/{documentId}", api.DeleteDocumentAction) // delete knowledge document
-		})
 	})
 
 	r.With(middleware.BasicAuth(viper.GetString("app.metrics.username"), viper.GetString("app.metrics.secret"))).Get("/api/v1/public/_metrics", promhttp.Handler().ServeHTTP) // Prometheus metrics
