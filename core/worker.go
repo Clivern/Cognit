@@ -11,11 +11,7 @@ import (
 	"time"
 
 	"github.com/clivern/cognit/db"
-	"github.com/clivern/cognit/pkg/ai"
 	"github.com/clivern/cognit/pkg/broker"
-	"github.com/clivern/cognit/pkg/qdrant"
-	"github.com/clivern/cognit/pkg/storage"
-	"github.com/clivern/cognit/service/knowledge"
 	"github.com/clivern/cognit/worker"
 
 	"github.com/rs/zerolog/log"
@@ -37,36 +33,6 @@ func RunWorker() error {
 		}
 	}()
 
-	store, err := storage.New()
-	if err != nil {
-		return fmt.Errorf("failed to initialize document storage: %w", err)
-	}
-
-	vdb, err := qdrant.New()
-	if err != nil {
-		return fmt.Errorf("failed to initialize qdrant: %w", err)
-	}
-
-	defer func() {
-		err := vdb.Close()
-		if err != nil {
-			log.Error().
-				Err(err).
-				Msg("Error closing qdrant client")
-		}
-	}()
-
-	ksvc := knowledge.New(knowledge.Dependencies{
-		Documents: db.NewDocumentRepository(
-			db.GetDB(true),
-		),
-		Embed:         ai.NewEmbedClient(),
-		Vectors:       vdb,
-		Store:         store,
-		Usage:         db.NewUsageRepository(db.GetDB(false)),
-		Subscriptions: db.NewSubscriptionRepository(db.GetDB(false)),
-	})
-
 	client, err := broker.New()
 	if err != nil {
 		return fmt.Errorf("failed to connect to nats: %w", err)
@@ -77,8 +43,7 @@ func RunWorker() error {
 	nats := client.Config().NATS
 
 	worker.Register(worker.Dependencies{
-		Knowledge: ksvc,
-		Tasks:     db.NewAsyncTaskRepository(db.GetDB(false)),
+		Tasks: db.NewAsyncTaskRepository(db.GetDB(false)),
 	})
 
 	err = worker.Bind(client, nats.Queue)

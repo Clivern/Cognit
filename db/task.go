@@ -14,8 +14,7 @@ const (
 	AsyncTaskStatusCompleted = "completed"
 	AsyncTaskStatusFailed    = "failed"
 
-	AsyncTaskTypeDocIndex  = "cognit.doc.index"
-	AsyncTaskTypeDocDelete = "cognit.doc.delete"
+	AsyncTaskTypeNoop = "cognit.noop"
 )
 
 // AsyncTask is a single row in the async_tasks table.

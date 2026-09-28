@@ -27,29 +27,20 @@ type Registration struct {
 // Registrations is a list of all registered handlers.
 var Registrations []Registration
 
-// Knowledge indexes and deletes workspace documents.
-type Knowledge interface {
-	Index(ctx context.Context, documentId db.Id) error
-	Delete(ctx context.Context, documentId db.Id, internalId string) error
-}
-
 // Dependencies are the services required by worker handlers.
 type Dependencies struct {
-	Knowledge Knowledge
-	Tasks     db.AsyncTaskRepository
+	Tasks db.AsyncTaskRepository
 }
 
 type handlers struct {
-	knowledge Knowledge
-	tasks     db.AsyncTaskRepository
+	tasks db.AsyncTaskRepository
 }
 
 // Register attaches all worker handlers.
 func Register(deps Dependencies) {
-	h := &handlers{knowledge: deps.Knowledge, tasks: deps.Tasks}
+	h := &handlers{tasks: deps.Tasks}
 
-	On(db.AsyncTaskTypeDocIndex, h.HandleDocumentIndex)
-	On(db.AsyncTaskTypeDocDelete, h.HandleDocumentDelete)
+	On(db.AsyncTaskTypeNoop, h.HandleNoop)
 }
 
 // On registers a queue worker handler for subject.
