@@ -81,12 +81,6 @@ const routes = [
     meta: { requiresAuth: true, requiresWorkspace: true, requiresWorkspaceAdmin: true, title: 'Audits', description: 'Workspace audit log' }
   },
   {
-    path: '/knowledge',
-    name: 'Knowledge',
-    component: () => import('@/views/Knowledge.vue'),
-    meta: { requiresAuth: true, requiresWorkspace: true, title: 'Knowledge', description: 'Knowledge' }
-  },
-  {
     path: '/404',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue'),
