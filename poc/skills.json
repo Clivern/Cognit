@@ -32,5 +32,28 @@
       "properties": {"user_id": {"type": "string"}},
       "required": ["user_id"]
     }
+  },
+  {
+    "id": "user.session.list",
+    "name": "User Directory",
+    "description": "List active login sessions for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "user.session.revoke",
+    "name": "User Directory",
+    "description": "Sign a user out of one session.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "user_id": {"type": "string"},
+        "session_id": {"type": "string"}
+      },
+      "required": ["user_id", "session_id"]
+    }
   }
 ]
