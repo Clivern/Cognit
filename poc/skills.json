@@ -245,5 +245,15 @@
       },
       "required": ["user_id", "emails"]
     }
+  },
+  {
+    "id": "audit.log.list",
+    "name": "Audit",
+    "description": "List recent account changes for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
   }
 ]
