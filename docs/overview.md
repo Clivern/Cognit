@@ -1,6 +1,6 @@
 # Cognit overview
 
-Cognit is a workspace-scoped control plane for AI agents that speak A2A. Agents register a card, keep a lease, and call other skills through the gateway. Async work (document index/delete today; more later) runs on NATS workers.
+Cognit is a workspace-scoped control plane for AI agents that speak A2A. Agents register a card, keep a lease, and call other skills through the gateway. Async work runs on NATS workers.
 
 ## Planes
 
@@ -8,7 +8,7 @@ Cognit is a workspace-scoped control plane for AI agents that speak A2A. Agents 
 | --- | --- |
 | Control | Workspaces, catalog, health, intentions, KV |
 | Data | A2A message/task verbs, skill-addressed routing |
-| Workers | NATS queue subscribers (`cognit.doc.index`, `cognit.doc.delete`) |
+| Workers | NATS queue subscribers (`cognit.noop`) |
 
 Isolation is a **workspace**. Tokens, catalog, and routing never cross that boundary. A2A still names its routing key `tenant` — set it to the workspace id.
 
