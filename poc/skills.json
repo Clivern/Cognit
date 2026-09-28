@@ -177,5 +177,38 @@
       "properties": {"user_id": {"type": "string"}},
       "required": ["user_id"]
     }
+  },
+  {
+    "id": "support.ticket.create",
+    "name": "Support",
+    "description": "Open a new support ticket.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "user_id": {"type": "string"},
+        "text": {"type": "string"}
+      },
+      "required": ["user_id", "text"]
+    }
+  },
+  {
+    "id": "support.ticket.list",
+    "name": "Support",
+    "description": "List open support tickets for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "support.ticket.status",
+    "name": "Support",
+    "description": "Get the status of one ticket id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"ticket_id": {"type": "string"}},
+      "required": ["ticket_id"]
+    }
   }
 ]
