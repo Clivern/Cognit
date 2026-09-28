@@ -57,6 +57,8 @@ func SetupServer(Static embed.FS) http.Handler {
 		r.Post("/api/v1/public/action/logout", api.LogoutAction)                            // user logout
 		r.Get("/api/v1/public/action/oauth/github", api.GitHubOAuthStartAction)             // start GitHub OAuth
 		r.Get("/api/v1/public/action/oauth/github/callback", api.GitHubOAuthCallbackAction) // GitHub OAuth callback
+		r.Get("/api/v1/public/action/oauth/google", api.GoogleOAuthStartAction)             // start Google OAuth
+		r.Get("/api/v1/public/action/oauth/google/callback", api.GoogleOAuthCallbackAction) // Google OAuth callback
 		if conf.IsSaaS() {
 			r.Post("/api/v1/public/action/stripe/webhook", api.StripeWebhookAction) // Stripe billing webhook
 		}
