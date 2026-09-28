@@ -118,3 +118,10 @@ def agent_card():
             {"id": skill["id"], "description": skill["description"]} for skill in SKILLS
         ],
     }
+
+
+@app.post("/a2a/v1/message:send")
+def message_send(body: dict):
+    skill_id = body["skill"]
+    data = body["message"]["parts"][0].get("data") or {}
+    return {"message": {"role": "ROLE_AGENT", "parts": [{"data": fake(skill_id, data)}]}}
