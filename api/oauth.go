@@ -163,3 +163,75 @@ func GoogleOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, authorizeURL, http.StatusFound)
 }
+
+// GoogleOAuthCallbackAction completes Google OAuth and creates a session.
+func GoogleOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	state := r.URL.Query().Get("state")
+	expectedState := util.GetCookie(r, OauthStateCookie)
+
+	util.DeleteCookie(w, OauthStateCookie)
+
+	oauth := google.NewOAuth(google.OAuthConfig{
+		ClientID:     viper.GetString("app.oauth.google.client_id"),
+		ClientSecret: viper.GetString("app.oauth.google.client_secret"),
+		RedirectURL:  viper.GetString("app.oauth.google.redirect_url"),
+		Scopes:       []string{"openid", "email", "profile"},
+	})
+
+	token, err := oauth.Exchange(r.Context(), code, state, expectedState)
+	if err != nil {
+		log.Error().Err(err).Msg("Google oauth exchange failed")
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
+		return
+	}
+
+	user, err := oauth.User(r.Context(), token.AccessToken)
+	if err != nil {
+		log.Error().Err(err).Msg("Google oauth user fetch failed")
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
+		return
+	}
+
+	auth := module.NewAuth(
+		db.NewUserRepository(db.GetDB()),
+		db.NewSessionRepository(db.GetDB()),
+		db.NewConfigRepository(db.GetDB()),
+	)
+
+	result, err := auth.LoginWithOAuth(r.Context(), &module.OAuthIdentity{
+		Provider:       db.UserProviderGoogle,
+		ProviderUserID: user.Sub,
+		Email:          user.Email,
+		Name: lo.Ternary(
+			lo.IsNotEmpty(user.Name),
+			user.Name,
+			user.Email,
+		),
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("Google oauth login failed")
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
+		return
+	}
+
+	util.SetCookie(w, "_cognit_session", result.Session.Token, result.CookieOptions)
+
+	im := module.NewInvite(
+		db.NewUserInviteRepository(db.GetDB()),
+		db.NewUserRepository(db.GetDB()),
+		db.NewConfigRepository(db.GetDB()),
+		db.NewWorkspaceRepository(db.GetDB()),
+		db.NewWorkspaceUserRepository(db.GetDB()),
+		resend.NewMailer(),
+	)
+	err = im.AttachPending(result.User)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("userId", result.User.Id.String()).
+			Msg("Failed to attach pending workspace invites")
+	}
+
+	http.Redirect(w, r, util.AppURL("/login?oauth=google"), http.StatusFound)
+}
