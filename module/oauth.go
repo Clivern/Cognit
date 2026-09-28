@@ -35,6 +35,10 @@ func (a *Auth) LoginWithOAuth(ctx context.Context, identity *OAuthIdentity) (*Lo
 
 	foundByProvider := user != nil
 
+	if lo.IsEmpty(identity.Email) {
+		return nil, fmt.Errorf("oauth identity missing email")
+	}
+
 	if user == nil {
 		user, err = a.UserRepository.GetByEmail(identity.Email)
 		if err != nil {
