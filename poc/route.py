@@ -23,6 +23,15 @@ import httpx
 
 SKILLS = json.loads(Path(__file__).with_name("skills.json").read_text())
 AGENT = "http://127.0.0.1:9100/a2a/v1/message:send"
+QUESTIONS = [
+    "What's on my profile (u_123) and when do I renew?",
+    "When does the plan for u_123 renew?",
+    "Show me the invoices for u_123.",
+    "Send u_123 a password reset.",
+    "Is the product down right now?",
+    "Please add user joe@gmail.com to team sre-02 and remove user jane@acme.io from the team sre-03",
+]
+
 
 def choose(client, question):
     """Each skill is a separate yes/no, so one sentence can match more than one."""
@@ -81,3 +90,56 @@ def arguments(client, question, skill):
     )
     response.raise_for_status()
     return json.loads(response.json()["choices"][0]["message"]["content"])
+
+
+def call(client, skill_id, args):
+    response = client.post(
+        AGENT,
+        json={
+            "skill": skill_id,
+            "message": {"role": "ROLE_USER", "parts": [{"data": args}]},
+        },
+    )
+    response.raise_for_status()
+    return response.json()["message"]["parts"][0]["data"]
+
+
+def reply(client, question, results):
+    response = client.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}"},
+        json={
+            "model": "openai/gpt-4o-mini",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": (
+                        "Write a short answer to the customer using only these results.\n"
+                        f"Question: {question}\n"
+                        f"Results: {json.dumps(results)}"
+                    ),
+                }
+            ],
+        },
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+
+def main():
+    with httpx.Client() as client:
+        for question in QUESTIONS:
+            print(question)
+            results = []
+            for skill, score in choose(client, question):
+                args = arguments(client, question, skill)
+                data = call(client, skill["id"], args)
+                results.append({"skill": skill["id"], "data": data})
+                print(skill["id"], score)
+                print(data)
+            print(reply(client, question, results))
+            print()
+
+
+if __name__ == "__main__":
+    main()
