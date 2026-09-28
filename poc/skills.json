@@ -222,5 +222,28 @@
     "name": "Status",
     "description": "List current and recent outages.",
     "arguments": {"type": "object", "properties": {}, "required": []}
+  },
+  {
+    "id": "notification.prefs.get",
+    "name": "Notifications",
+    "description": "Get which emails a user receives.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "notification.prefs.update",
+    "name": "Notifications",
+    "description": "Change which emails a user receives.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "user_id": {"type": "string"},
+        "emails": {"type": "array", "items": {"type": "string"}}
+      },
+      "required": ["user_id", "emails"]
+    }
   }
 ]
