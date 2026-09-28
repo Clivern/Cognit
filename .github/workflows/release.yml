@@ -6,7 +6,7 @@ on:
       - "*"
 
 permissions:
-   contents: write
+  contents: write
 
 jobs:
   goreleaser:
@@ -25,18 +25,7 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          cache-dependency-path: package-lock.json
-      - name: Build web assets
-        run: |
-          npm install -g npm@10.9.8
-          npm ci --prefix web
-          make web
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: web/package-lock.json
       - name: Build web assets
         run: |
           npm install -g npm@10.9.8
