@@ -12,6 +12,7 @@ import (
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/module"
 	"github.com/clivern/cognit/pkg/github"
+	"github.com/clivern/cognit/pkg/google"
 	"github.com/clivern/cognit/pkg/resend"
 	"github.com/clivern/cognit/pkg/util"
 
@@ -131,4 +132,34 @@ func GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, util.AppURL("/login?oauth=github"), http.StatusFound)
+}
+
+// GoogleOAuthStartAction redirects the browser to Google's authorize URL.
+func GoogleOAuthStartAction(w http.ResponseWriter, r *http.Request) {
+	oauth := google.NewOAuth(google.OAuthConfig{
+		ClientID:     viper.GetString("app.oauth.google.client_id"),
+		ClientSecret: viper.GetString("app.oauth.google.client_secret"),
+		RedirectURL:  viper.GetString("app.oauth.google.redirect_url"),
+		Scopes:       []string{"openid", "email", "profile"},
+	})
+
+	state, err := util.GenerateSecureToken(24)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to generate oauth state")
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
+		return
+	}
+
+	authorizeURL := oauth.AuthorizeURL(state)
+
+	opts := lo.Ternary(
+		strings.HasPrefix(util.AppURL(""), "https://"),
+		util.SecureCookieOptions(),
+		util.DefaultCookieOptions(),
+	)
+	opts.SameSite = http.SameSiteLaxMode
+	opts.MaxAge = int((10 * time.Minute) / time.Second)
+	util.SetCookie(w, OauthStateCookie, state, opts)
+
+	http.Redirect(w, r, authorizeURL, http.StatusFound)
 }
