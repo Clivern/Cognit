@@ -15,6 +15,9 @@
     </p>
 </p>
 
+Cognit is a service discovery registry for AI Agents. Agents register, discover each other by skill, and call through a gateway that enforces health and policy on every request.
+
+
 ### Versioning
 
 For transparency into our release cycle and in striving to maintain backward compatibility, Cognit is maintained under the [Semantic Versioning guidelines](https://semver.org/) and release process is predictable and business-friendly.
