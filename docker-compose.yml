@@ -22,6 +22,10 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
+  nats:
+    image: nats:2-alpine
+    restart: unless-stopped
+
   migrate:
     image: ${COGNIT_IMAGE:-registry.digitalocean.com/cognit/cognit:main}
     restart: "no"
@@ -53,6 +57,7 @@ services:
       COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
       COGNIT_AI_QDRANT_HOST: qdrant
       COGNIT_AI_QDRANT_PORT: "6334"
+      COGNIT_BROKER_URL: nats://nats:4222
       COGNIT_AI_OROUTE_API_KEY: ${COGNIT_AI_OROUTE_API_KEY:-}
       COGNIT_RESEND_API_KEY: ${COGNIT_RESEND_API_KEY:-}
       COGNIT_STRIPE_SECRET_KEY: ${COGNIT_STRIPE_SECRET_KEY:-}
@@ -66,6 +71,8 @@ services:
       postgres:
         condition: service_healthy
       qdrant:
+        condition: service_started
+      nats:
         condition: service_started
       migrate:
         condition: service_completed_successfully
