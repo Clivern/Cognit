@@ -15,9 +15,6 @@
     </p>
 </p>
 
-Agents need to find each other, stay healthy, and hand work off without hard-coded IPs. The bottleneck is discovery: who is registered, which skills they expose, and whether they are allowed to call. `Cognit` is the registry for that. Agents publish A2A cards into a workspace, renew a lease, and call other skills through a gateway.
-
-
 ### Versioning
 
 For transparency into our release cycle and in striving to maintain backward compatibility, Cognit is maintained under the [Semantic Versioning guidelines](https://semver.org/) and release process is predictable and business-friendly.
