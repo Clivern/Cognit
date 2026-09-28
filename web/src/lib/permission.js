@@ -1,10 +1,7 @@
 import { computed } from 'vue'
 import { loadUserFromStorage, loadWorkspaceFromStorage } from '@/utils/storage'
 
-export const WORKSPACE_KEY_PERMISSIONS = [
-  { value: 'CAN_LIST_WORKSPACE_DOCUMENTS', labelKey: 'workspace_settings_page.perm_list_documents' },
-  { value: 'CAN_QUERY_WORKSPACE_DOCUMENTS', labelKey: 'workspace_settings_page.perm_query_documents' },
-]
+export const WORKSPACE_KEY_PERMISSIONS = []
 
 export const PLATFORM_ROLE_ADMIN = 'admin'
 export const PLATFORM_ROLE_REGULAR = 'regular'

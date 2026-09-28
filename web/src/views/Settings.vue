@@ -132,7 +132,7 @@
                 </div>
               </div>
 
-              <div>
+              <div v-if="WORKSPACE_KEY_PERMISSIONS.length">
                 <p class="form-label mb-2">{{ $t('workspace_settings_page.permissions') }}</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5">
                   <label
@@ -156,7 +156,7 @@
                 <button
                   type="button"
                   class="btn-primary"
-                  :disabled="accessKeysLoading || creatingKey || !newKeyName.trim() || selectedPermissions.length === 0"
+                  :disabled="accessKeysLoading || creatingKey || !newKeyName.trim() || (WORKSPACE_KEY_PERMISSIONS.length > 0 && selectedPermissions.length === 0)"
                   @click="handleCreateKey"
                 >
                   <span v-if="!creatingKey">{{ $t('workspace_settings_page.create_key') }}</span>
@@ -363,7 +363,7 @@ const accessKeysLoading = ref(false)
 const creatingKey = ref(false)
 const newKeyName = ref('')
 const newKeyExpiresAt = ref('')
-const selectedPermissions = ref(['CAN_GET_PROMPT'])
+const selectedPermissions = ref([])
 const newlyCreatedKey = ref(null)
 const deletingId = ref(null)
 const revokeModalKey = ref(null)
@@ -504,7 +504,7 @@ async function loadAccessKeys() {
 
 async function handleCreateKey() {
   const name = newKeyName.value.trim()
-  if (!name || selectedPermissions.value.length === 0) return
+  if (!name || (WORKSPACE_KEY_PERMISSIONS.length > 0 && selectedPermissions.value.length === 0)) return
 
   creatingKey.value = true
   errorMessage.value = null
