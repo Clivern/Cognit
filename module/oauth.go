@@ -46,6 +46,20 @@ func (a *Auth) LoginWithOAuth(ctx context.Context, identity *OAuthIdentity) (*Lo
 		}
 	}
 
+	if user != nil && !foundByProvider && (user.Provider == db.UserProviderLocal || lo.IsEmpty(user.Provider)) {
+		providerUserID := identity.ProviderUserID
+		user.Provider = identity.Provider
+		user.ProviderUserId = &providerUserID
+		user.IsEmailVerified = true
+		if lo.IsNotEmpty(identity.Name) {
+			user.Name = identity.Name
+		}
+		err = a.UserRepository.Update(user)
+		if err != nil {
+			return nil, fmt.Errorf("convert local user to oauth: %w", err)
+		}
+	}
+
 	if user == nil {
 		pwd, err := util.GenerateSecureToken(20)
 		if err != nil {
