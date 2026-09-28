@@ -73,5 +73,34 @@ def fake(skill_id, args):
             "refunded": True,
         },
         "usage.summary.get": {"user_id": user, "used": 1200, "included": 5000},
+        "support.ticket.create": {
+            "user_id": user,
+            "ticket_id": "t_1",
+            "text": args.get("text") or "",
+            "status": "open",
+        },
+        "support.ticket.list": {
+            "user_id": user,
+            "tickets": [{"ticket_id": "t_1", "status": "open"}],
+        },
+        "support.ticket.status": {
+            "ticket_id": args.get("ticket_id") or "t_1",
+            "status": "open",
+        },
+        "product.status.get": {"up": True},
+        "product.outage.list": {"outages": []},
+        "notification.prefs.get": {
+            "user_id": user,
+            "emails": ["billing", "product"],
+        },
+        "notification.prefs.update": {
+            "user_id": user,
+            "emails": args.get("emails") or [],
+            "updated": True,
+        },
+        "audit.log.list": {
+            "user_id": user,
+            "events": [{"action": "login", "at": "2026-09-28T10:00:00Z"}],
+        },
     }
     return replies[skill_id]
