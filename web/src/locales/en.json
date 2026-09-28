@@ -17,10 +17,11 @@
   },
   "login": {
     "title": "Welcome back",
-    "subtitle": "Sign in with your GitHub account to continue.",
+    "subtitle": "Sign in with GitHub or Google to continue.",
     "continue_github": "Continue with GitHub",
-    "oauth_failed": "GitHub sign-in failed. Please try again.",
-    "submitting": "Redirecting to GitHub…"
+    "continue_google": "Continue with Google",
+    "oauth_failed": "Sign-in failed. Please try again.",
+    "submitting": "Redirecting…"
   },
   "setup": {
     "title": "Cognit",
