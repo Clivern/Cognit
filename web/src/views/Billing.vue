@@ -205,15 +205,11 @@ const billingStatus = ref({
 const usageData = ref({
   used: {
     workspaceMembers: 0,
-    documentsCount: 0,
-    storageGB: 0,
     aiTokens: 0,
     aiCost: 0
   },
   limits: {
     workspaceMembers: 3,
-    documentsCount: 100,
-    storageGB: 5,
     aiTokens: 500_000
   },
   periodReset: ''
@@ -299,26 +295,6 @@ const buildUsageMetrics = (limits, used) => {
       limit: limits.workspaceMembers,
       displayUsed: formatNumber(used.workspaceMembers),
       displayLimit: formatNumber(limits.workspaceMembers)
-    },
-    {
-      id: 'documentsCount',
-      resetPolicy: 'capacity',
-      label: t('billing_page.metrics.documents_count_label'),
-      hint: t('billing_page.metrics.documents_count_hint'),
-      used: used.documentsCount,
-      limit: limits.documentsCount,
-      displayUsed: formatNumber(used.documentsCount),
-      displayLimit: formatNumber(limits.documentsCount)
-    },
-    {
-      id: 'storageGB',
-      resetPolicy: 'capacity',
-      label: t('billing_page.metrics.storage_used_label'),
-      hint: t('billing_page.metrics.storage_used_hint'),
-      used: used.storageGB,
-      limit: limits.storageGB,
-      displayUsed: `${used.storageGB.toFixed(1)} GB`,
-      displayLimit: `${limits.storageGB} GB`
     },
     {
       id: 'aiCost',
