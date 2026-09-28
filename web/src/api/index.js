@@ -83,10 +83,6 @@ export const workspace_invite_api = {
   delete: (workspaceId, id) => api.delete(`/workspaces/${workspaceId}/invites/${id}`),
 }
 
-export const stats_api = {
-  get: (workspaceId) => api.get(`/workspaces/${workspaceId}/stats`),
-}
-
 export const billing_api = {
   status: (workspaceId) => api.get(`/workspaces/${workspaceId}/billing`),
   usage: (workspaceId) => api.get(`/workspaces/${workspaceId}/billing/usage`),
@@ -105,14 +101,5 @@ export const api_keys_api = {
   list: (params) => api.get('/apiKeys', { params }),
   create: (data) => api.post('/apiKeys', data),
   delete: (id) => api.delete(`/apiKeys/${id}`),
-}
-
-export const document_api = {
-  list: (workspaceId, params, config) => api.get(`/workspaces/${workspaceId}/documents`, { ...config, params }),
-  upload: (workspaceId, formData) => api.post(`/workspaces/${workspaceId}/documents`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 60000,
-  }),
-  delete: (workspaceId, documentId) => api.delete(`/workspaces/${workspaceId}/documents/${documentId}`),
 }
 

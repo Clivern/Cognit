@@ -16,15 +16,6 @@
         </p>
       </header>
 
-      <section class="mb-8" aria-label="Key metrics">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div class="stat-card">
-            <p class="stat-label">{{ $t('dashboard.documents_stored') }}</p>
-            <p class="stat-value mt-1">{{ loading ? '…' : stats.documentsStored.toLocaleString() }}</p>
-          </div>
-        </div>
-      </section>
-
       <section class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div class="section overflow-hidden !p-0">
           <div class="border-b border-theme-border px-6 py-4">
@@ -216,7 +207,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  stats_api,
   billing_api,
   workspace_api,
 } from '@/api'
@@ -242,10 +232,6 @@ function dismissWhatsNew() {
   localStorage.setItem(WHATS_NEW_KEY, '1')
 }
 
-const stats = ref({
-  documentsStored: 0,
-})
-
 const tokenBalanceLabel = computed(() => {
   if (tokenBalance.value == null) return loading.value ? '…' : '—'
   return tokenBalance.value.toLocaleString()
@@ -260,14 +246,6 @@ const memberCount = computed(() => {
 })
 
 const attentionItems = computed(() => [
-  {
-    id: 'doc',
-    level: 'error',
-    title: t('dashboard.attention_doc_title'),
-    description: t('dashboard.attention_doc_desc'),
-    action: t('dashboard.attention_doc_action'),
-    to: '/knowledge',
-  },
   {
     id: 'key',
     level: 'error',
@@ -291,14 +269,6 @@ const attentionItems = computed(() => [
     description: t('dashboard.attention_integration_desc'),
     action: t('dashboard.attention_integration_action'),
     to: '/integrations',
-  },
-  {
-    id: 'queue',
-    level: 'error',
-    title: t('dashboard.attention_queue_title'),
-    description: t('dashboard.attention_queue_desc'),
-    action: t('dashboard.attention_queue_action'),
-    to: '/knowledge',
   },
   {
     id: 'trial',
@@ -325,14 +295,6 @@ const attentionItems = computed(() => [
     action: t('dashboard.attention_latency_action'),
     to: '/audits',
   },
-  {
-    id: 'empty_kb',
-    level: 'info',
-    title: t('dashboard.attention_empty_kb_title'),
-    description: t('dashboard.attention_empty_kb_desc'),
-    action: t('dashboard.attention_empty_kb_action'),
-    to: '/knowledge',
-  },
 ].filter((item) => !item.requiresSaaS || isSaaS()))
 
 function attentionDotClass(level) {
@@ -344,20 +306,11 @@ function attentionDotClass(level) {
 }
 
 const activityIcons = {
-  doc: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
   member: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',
   key: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
 }
 
 const recentActivity = computed(() => [
-  {
-    id: 1,
-    icon: 'doc',
-    actor: 'System',
-    action: t('dashboard.activity_indexed'),
-    target: 'onboarding-guide.pdf',
-    time: t('dashboard.activity_time_18m'),
-  },
   {
     id: 2,
     icon: 'member',
@@ -380,14 +333,6 @@ async function loadDashboard() {
   loading.value = true
 
   const tasks = [
-    stats_api.get(currentWorkspace.id)
-      .then((res) => {
-        stats.value = {
-          documentsStored: res.data.documentsStored ?? 0,
-        }
-      })
-      .catch(() => {}),
-
     workspace_api.get(currentWorkspace.id)
       .then((res) => {
         workspace.value = { ...currentWorkspace, ...res.data, role: res.data.role ?? currentWorkspace.role }
