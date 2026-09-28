@@ -104,3 +104,17 @@ def fake(skill_id, args):
         },
     }
     return replies[skill_id]
+
+
+@app.get("/.well-known/agent-card.json")
+def agent_card():
+    return {
+        "name": "Agent",
+        "description": "Fake replies for every skill",
+        "version": "1.0.0",
+        "protocolVersion": "1.0",
+        "url": "http://127.0.0.1:9100/a2a/v1",
+        "skills": [
+            {"id": skill["id"], "description": skill["description"]} for skill in SKILLS
+        ],
+    }
