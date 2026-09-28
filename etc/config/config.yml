@@ -25,6 +25,10 @@ app:
       client_id: ${COGNIT_GITHUB_OAUTH_CLIENT_ID:-}
       client_secret: ${COGNIT_GITHUB_OAUTH_CLIENT_SECRET:-}
       redirect_url: ${COGNIT_GITHUB_OAUTH_REDIRECT_URL:-}
+    google:
+      client_id: ${COGNIT_GOOGLE_OAUTH_CLIENT_ID:-}
+      client_secret: ${COGNIT_GOOGLE_OAUTH_CLIENT_SECRET:-}
+      redirect_url: ${COGNIT_GOOGLE_OAUTH_REDIRECT_URL:-}
 
   database:
     rw:
