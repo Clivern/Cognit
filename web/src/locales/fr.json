@@ -17,10 +17,11 @@
   },
   "login": {
     "title": "Bon retour",
-    "subtitle": "Connectez-vous avec votre compte GitHub pour continuer.",
+    "subtitle": "Connectez-vous avec GitHub ou Google pour continuer.",
     "continue_github": "Continuer avec GitHub",
-    "oauth_failed": "La connexion GitHub a échoué. Veuillez réessayer.",
-    "submitting": "Redirection vers GitHub…"
+    "continue_google": "Continuer avec Google",
+    "oauth_failed": "La connexion a échoué. Veuillez réessayer.",
+    "submitting": "Redirection…"
   },
   "setup": {
     "title": "Ctx",
