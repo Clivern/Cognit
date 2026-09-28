@@ -43,5 +43,35 @@ def fake(skill_id, args):
         },
         "team.invite.send": {"email": email, "team_id": team, "invited": True},
         "team.member.remove": {"email": email, "team_id": team, "removed": True},
+        "billing.renewal.get": {
+            "user_id": user,
+            "plan": "team",
+            "renews_on": "2026-11-01",
+        },
+        "billing.plan.change": {
+            "user_id": user,
+            "plan": args.get("plan") or "team",
+            "changed": True,
+        },
+        "billing.plan.cancel": {"user_id": user, "cancelled": True},
+        "billing.invoice.list": {
+            "user_id": user,
+            "invoices": [
+                {"invoice_id": "in_1", "amount": "20.00"},
+                {"invoice_id": "in_2", "amount": "20.00"},
+            ],
+        },
+        "billing.invoice.get": {
+            "invoice_id": args.get("invoice_id") or "in_1",
+            "amount": "20.00",
+            "status": "paid",
+        },
+        "billing.payment_method.update": {"user_id": user, "card": "visa 4242"},
+        "billing.refund.create": {
+            "user_id": user,
+            "invoice_id": args.get("invoice_id") or "in_1",
+            "refunded": True,
+        },
+        "usage.summary.get": {"user_id": user, "used": 1200, "included": 5000},
     }
     return replies[skill_id]
