@@ -3,3 +3,8 @@ name = "cognit-agents-poc"
 version = "0.1.0"
 description = "Cognit Agents"
 requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "httpx",
+    "uvicorn",
+]
