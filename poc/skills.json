@@ -167,5 +167,15 @@
       },
       "required": ["user_id", "invoice_id"]
     }
+  },
+  {
+    "id": "usage.summary.get",
+    "name": "Billing",
+    "description": "Get how much of the plan a user has used this period.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
   }
 ]
