@@ -36,11 +36,6 @@ const (
 	CanGetAccessKey    = "CAN_GET_WORKSPACE_ACCESS_KEY"
 	CanDeleteAccessKey = "CAN_DELETE_WORKSPACE_ACCESS_KEY"
 
-	CanCreateWorkspaceDocument = "CAN_CREATE_WORKSPACE_DOCUMENT"
-	CanListWorkspaceDocuments  = "CAN_LIST_WORKSPACE_DOCUMENTS"
-	CanQueryWorkspaceDocuments = "CAN_QUERY_WORKSPACE_DOCUMENTS"
-	CanDeleteWorkspaceDocument = "CAN_DELETE_WORKSPACE_DOCUMENT"
-
 	CanListWorkspaceAudits = "CAN_LIST_WORKSPACE_AUDITS"
 	CanGetWorkspaceAudit   = "CAN_GET_WORKSPACE_AUDIT"
 )
@@ -51,10 +46,7 @@ var (
 )
 
 // AccessKeyPermissions lists permissions that may be assigned to workspace access keys.
-var AccessKeyPermissions = map[string]bool{
-	CanListWorkspaceDocuments:  true,
-	CanQueryWorkspaceDocuments: true,
-}
+var AccessKeyPermissions = map[string]bool{}
 
 // Perm checks workspace permissions for users and workspace access keys.
 type Perm struct {
@@ -125,9 +117,7 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 
 	switch permission {
 	case CanGetWorkspace,
-		CanGetWorkspaceBilling,
-		CanListWorkspaceDocuments,
-		CanQueryWorkspaceDocuments:
+		CanGetWorkspaceBilling:
 		return true, nil
 	case CanUpdateWorkspace,
 		CanDeleteWorkspace,
@@ -144,9 +134,7 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 		CanGetAccessKey,
 		CanDeleteAccessKey,
 		CanListWorkspaceAudits,
-		CanGetWorkspaceAudit,
-		CanCreateWorkspaceDocument,
-		CanDeleteWorkspaceDocument:
+		CanGetWorkspaceAudit:
 		return membership.Role == db.UserRoleAdmin || membership.Role == db.UserRoleOwner, nil
 	default:
 		return false, nil
@@ -174,7 +162,7 @@ func (p *Perm) CanAsAccessKey(permission string) (bool, error) {
 // ValidAccessKeyPermissions reports whether every permission may be assigned to an access key.
 func ValidAccessKeyPermissions(permissions []string) bool {
 	if len(permissions) == 0 {
-		return false
+		return len(AccessKeyPermissions) == 0
 	}
 	return lo.EveryBy(permissions, func(permission string) bool {
 		return AccessKeyPermissions[permission]

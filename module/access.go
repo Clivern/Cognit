@@ -49,7 +49,7 @@ type ListAccessKeysResult struct {
 type CreateAccessKeyRequest struct {
 	Name        string   `json:"name" validate:"required,max=60" label:"Name"`
 	ExpiresAt   string   `json:"expiresAt" validate:"omitempty,max=64" label:"Expires at"`
-	Permissions []string `json:"permissions" validate:"required,min=1,dive,required" label:"Permissions"`
+	Permissions []string `json:"permissions" validate:"omitempty,dive,required" label:"Permissions"`
 }
 
 // AccessKeyResponse is a workspace access key shaped for API responses.
