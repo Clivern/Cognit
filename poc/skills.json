@@ -210,5 +210,17 @@
       "properties": {"ticket_id": {"type": "string"}},
       "required": ["ticket_id"]
     }
+  },
+  {
+    "id": "product.status.get",
+    "name": "Status",
+    "description": "Say whether the product is up right now.",
+    "arguments": {"type": "object", "properties": {}, "required": []}
+  },
+  {
+    "id": "product.outage.list",
+    "name": "Status",
+    "description": "List current and recent outages.",
+    "arguments": {"type": "object", "properties": {}, "required": []}
   }
 ]
