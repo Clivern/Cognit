@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="Cognit Logo" src="/static/logo.png?v=0.1.0" width="180" />
+    <img alt="Cognit Logo" src="/static/logo.png?v=0.1.0" width="120" />
     <h3 align="center">Cognit</h3>
     <p align="center">A Service Discovery Registry for AI Agents</p>
     <p align="center">
