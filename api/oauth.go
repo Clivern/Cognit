@@ -11,7 +11,7 @@ import (
 
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/github/oauth"
+	"github.com/clivern/cognit/pkg/github"
 	"github.com/clivern/cognit/pkg/resend"
 	"github.com/clivern/cognit/pkg/util"
 
@@ -24,9 +24,7 @@ const OauthStateCookie = "_cognit_oauth_state"
 
 // GitHubOAuthStartAction redirects the browser to GitHub's authorize URL.
 func GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
-	errorURL := util.AppURL("/login?oauth_error=github")
-
-	client := oauth.NewOAuth(oauth.OAuthConfig{
+	oauth := github.NewOAuth(github.OAuthConfig{
 		ClientID:     viper.GetString("app.oauth.github.client_id"),
 		ClientSecret: viper.GetString("app.oauth.github.client_secret"),
 		RedirectURL:  viper.GetString("app.oauth.github.redirect_url"),
@@ -37,11 +35,11 @@ func GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 	state, err := util.GenerateSecureToken(24)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate oauth state")
-		http.Redirect(w, r, errorURL, http.StatusFound)
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
-	authorizeURL := client.AuthorizeURL(state)
+	authorizeURL := oauth.AuthorizeURL(state)
 
 	opts := lo.Ternary(
 		strings.HasPrefix(util.AppURL(""), "https://"),
@@ -57,15 +55,13 @@ func GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 
 // GitHubOAuthCallbackAction completes GitHub OAuth and creates a session.
 func GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
-	errorURL := util.AppURL("/login?oauth_error=github")
-
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 	expectedState := util.GetCookie(r, OauthStateCookie)
 
 	util.DeleteCookie(w, OauthStateCookie)
 
-	client := oauth.NewOAuth(oauth.OAuthConfig{
+	oauth := github.NewOAuth(github.OAuthConfig{
 		ClientID:     viper.GetString("app.oauth.github.client_id"),
 		ClientSecret: viper.GetString("app.oauth.github.client_secret"),
 		RedirectURL:  viper.GetString("app.oauth.github.redirect_url"),
@@ -73,33 +69,26 @@ func GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 		AllowSignup:  true,
 	})
 
-	token, err := client.Exchange(r.Context(), code, state, expectedState)
+	token, err := oauth.Exchange(r.Context(), code, state, expectedState)
 	if err != nil {
 		log.Error().Err(err).Msg("GitHub oauth exchange failed")
-		http.Redirect(w, r, errorURL, http.StatusFound)
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
-	user, err := client.User(r.Context(), token.AccessToken)
+	user, err := oauth.User(r.Context(), token.AccessToken)
 	if err != nil {
 		log.Error().Err(err).Msg("GitHub oauth user fetch failed")
-		http.Redirect(w, r, errorURL, http.StatusFound)
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
-	emails, err := client.Emails(r.Context(), token.AccessToken)
+	emails, err := oauth.Emails(r.Context(), token.AccessToken)
 	if err != nil {
 		log.Error().Err(err).Msg("GitHub oauth emails fetch failed")
-		http.Redirect(w, r, errorURL, http.StatusFound)
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
-
-	email := oauth.PrimaryEmail(emails, user.Email)
-	name := lo.Ternary(
-		lo.IsNotEmpty(user.Name),
-		user.Name,
-		user.Login,
-	)
 
 	auth := module.NewAuth(
 		db.NewUserRepository(db.GetDB()),
@@ -110,12 +99,16 @@ func GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 	result, err := auth.LoginWithOAuth(r.Context(), &module.OAuthIdentity{
 		Provider:       db.UserProviderGithub,
 		ProviderUserID: strconv.FormatInt(user.ID, 10),
-		Email:          email,
-		Name:           name,
+		Email:          github.PrimaryEmail(emails, user.Email),
+		Name: lo.Ternary(
+			lo.IsNotEmpty(user.Name),
+			user.Name,
+			user.Login,
+		),
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("GitHub oauth login failed")
-		http.Redirect(w, r, errorURL, http.StatusFound)
+		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
