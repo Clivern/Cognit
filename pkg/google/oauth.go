@@ -69,3 +69,46 @@ func (o *OAuth) AuthorizeURL(state string) string {
 
 	return OauthAuthorizeURL + "?" + q.Encode()
 }
+
+// Exchange validates state and exchanges an authorization code for an access token.
+func (o *OAuth) Exchange(ctx context.Context, code, state, expectedState string) (*Token, error) {
+	if state != expectedState {
+		return nil, ErrInvalidOAuthState
+	}
+
+	form := url.Values{
+		"client_id":     {o.cfg.ClientID},
+		"client_secret": {o.cfg.ClientSecret},
+		"code":          {code},
+		"grant_type":    {"authorization_code"},
+		"redirect_uri":  {o.cfg.RedirectURL},
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, OauthTokenURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("google oauth build request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("google oauth request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("google oauth read body: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("google oauth token: status %d: %s", resp.StatusCode, body)
+	}
+
+	var token Token
+	if err := json.Unmarshal(body, &token); err != nil {
+		return nil, fmt.Errorf("google oauth decode body: %w", err)
+	}
+
+	return &token, nil
+}
