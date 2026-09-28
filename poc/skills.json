@@ -124,5 +124,48 @@
       "properties": {"user_id": {"type": "string"}},
       "required": ["user_id"]
     }
+  },
+  {
+    "id": "billing.invoice.list",
+    "name": "Billing",
+    "description": "List invoices for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "billing.invoice.get",
+    "name": "Billing",
+    "description": "Get one invoice by its invoice id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"invoice_id": {"type": "string"}},
+      "required": ["invoice_id"]
+    }
+  },
+  {
+    "id": "billing.payment_method.update",
+    "name": "Billing",
+    "description": "Replace the card on file for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {"user_id": {"type": "string"}},
+      "required": ["user_id"]
+    }
+  },
+  {
+    "id": "billing.refund.create",
+    "name": "Billing",
+    "description": "Refund one invoice for a user id.",
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "user_id": {"type": "string"},
+        "invoice_id": {"type": "string"}
+      },
+      "required": ["user_id", "invoice_id"]
+    }
   }
 ]
