@@ -19,7 +19,4 @@ const (
 
 	// InviteExpiry is how long a workspace invite stays valid.
 	InviteExpiry = 7 * 24 * time.Hour
-
-	// MaxUploadBytes is the maximum multipart upload size.
-	MaxUploadBytes = 2 * 1024 * 1024
 )
