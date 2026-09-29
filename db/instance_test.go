@@ -80,3 +80,37 @@ func TestIntegrationAgentInstanceRepository(t *testing.T) {
 		}))
 	})
 }
+
+func TestIntegrationAgentInstanceMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	agent := createTestAgent(t, database, workspace.Id, "meta-instance-agent")
+	instance := createTestInstance(t, database, agent.Id, "meta-instance")
+	repo := NewAgentInstanceMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(instance.Id, "model", "gpt-5"))
+		got, err := repo.Get(instance.Id, "model")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "gpt-5", got.Value)
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(instance.Id, "model", "gpt-4"))
+		got, err := repo.Get(instance.Id, "model")
+		require.NoError(t, err)
+		assert.Equal(t, "gpt-4", got.Value)
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByAgentInstanceId(instance.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(instance.Id, "model"))
+		got, err := repo.Get(instance.Id, "model")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
