@@ -64,3 +64,24 @@ func TestIntegrationUserRepository(t *testing.T) {
 		assert.Nil(t, missing)
 	})
 }
+
+func TestIntegrationUserGetByAPIKey(t *testing.T) {
+	database := openTestDB(t)
+	user := createTestUser(t, database)
+	key := &APIKey{UserId: user.Id, Name: "cli", Key: "tok-" + user.Id.String()[:8]}
+	require.NoError(t, NewAPIKeyRepository(database).Create(key))
+	repo := NewUserRepository(database)
+
+	t.Run("matching key", func(t *testing.T) {
+		got, err := repo.GetByAPIKey(key.Key)
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, user.Id, got.Id)
+	})
+
+	t.Run("empty key", func(t *testing.T) {
+		got, err := repo.GetByAPIKey("")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
