@@ -51,7 +51,7 @@ func (r *AuditEventRepositoryPostgres) Create(event *AuditEvent) error {
 
 	err = r.db.QueryRow(
 		`INSERT INTO audit (
-			id, workspace_id, user_id, action, resource_type, resource_id,
+			id, workspace_id, actor_id, action, resource_type, resource_id,
 			ip_address, user_agent, meta
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -74,7 +74,7 @@ func (r *AuditEventRepositoryPostgres) GetById(id Id) (*AuditEvent, error) {
 	event := &AuditEvent{}
 	err := r.db.QueryRow(
 		`SELECT
-			id, workspace_id, user_id, action, resource_type, resource_id,
+			id, workspace_id, actor_id, action, resource_type, resource_id,
 			ip_address, user_agent, meta, created_at
 		FROM audit
 		WHERE id = $1`,
@@ -102,7 +102,7 @@ func (r *AuditEventRepositoryPostgres) GetById(id Id) (*AuditEvent, error) {
 func (r *AuditEventRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*AuditEvent, error) {
 	rows, err := r.db.Query(
 		`SELECT
-			id, workspace_id, user_id, action, resource_type, resource_id,
+			id, workspace_id, actor_id, action, resource_type, resource_id,
 			ip_address, user_agent, meta, created_at
 		FROM audit
 		WHERE workspace_id = $1
