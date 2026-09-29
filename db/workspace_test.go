@@ -67,3 +67,35 @@ func TestIntegrationWorkspaceRepository(t *testing.T) {
 		assert.Nil(t, missing)
 	})
 }
+
+func TestIntegrationWorkspaceMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	repo := NewWorkspaceMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(workspace.Id, "plan", `{"v":"pro"}`))
+		got, err := repo.Get(workspace.Id, "plan")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Contains(t, got.Value, "pro")
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(workspace.Id, "plan", `{"v":"team"}`))
+		got, err := repo.Get(workspace.Id, "plan")
+		require.NoError(t, err)
+		assert.Contains(t, got.Value, "team")
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByWorkspaceId(workspace.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(workspace.Id, "plan"))
+		got, err := repo.Get(workspace.Id, "plan")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
