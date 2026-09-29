@@ -85,3 +85,30 @@ func TestIntegrationUserGetByAPIKey(t *testing.T) {
 		assert.Nil(t, got)
 	})
 }
+
+func TestIntegrationUserGetBot(t *testing.T) {
+	database := openTestDB(t)
+	repo := NewUserRepository(database)
+
+	bot := &User{
+		Id:          BotUserId,
+		Name:        BotUserName,
+		Email:       "bot-" + BotUserId.String()[:8] + "@t.test",
+		Password:    "hash",
+		Provider:    UserProviderLocal,
+		Role:        UserRoleBot,
+		IsActive:    true,
+		Language:    UserLanguageEN,
+		Theme:       UserThemeDefault,
+		LastLoginAt: time.Now().UTC(),
+	}
+	require.NoError(t, repo.Create(bot))
+	t.Cleanup(func() { _ = repo.Delete(BotUserId) })
+
+	t.Run("returns bot user", func(t *testing.T) {
+		got, err := repo.GetBot()
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, BotUserName, got.Name)
+	})
+}
