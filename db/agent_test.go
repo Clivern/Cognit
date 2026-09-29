@@ -86,3 +86,37 @@ func TestIntegrationAgentRepository(t *testing.T) {
 		assert.Error(t, repo.Create(duplicate))
 	})
 }
+
+func TestIntegrationAgentMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	agent := createTestAgent(t, database, workspace.Id, "meta-agent")
+	repo := NewAgentMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(agent.Id, "region", "eu"))
+		got, err := repo.Get(agent.Id, "region")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "eu", got.Value)
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(agent.Id, "region", "us"))
+		require.NoError(t, repo.Upsert(agent.Id, "tier", "gold"))
+		got, err := repo.Get(agent.Id, "region")
+		require.NoError(t, err)
+		assert.Equal(t, "us", got.Value)
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByAgentId(agent.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 2)
+
+		require.NoError(t, repo.Delete(agent.Id, "tier"))
+		got, err := repo.Get(agent.Id, "tier")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
