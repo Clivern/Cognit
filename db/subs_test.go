@@ -56,3 +56,37 @@ func TestIntegrationSubscriptionRepository(t *testing.T) {
 		assert.Equal(t, "cus_updated", *got.ProviderCustomerId)
 	})
 }
+
+func TestIntegrationSubscriptionMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	sub := &Subscription{WorkspaceId: workspace.Id, AITokensBalance: 0}
+	require.NoError(t, NewSubscriptionRepository(database).Create(sub))
+	repo := NewSubscriptionMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(sub.Id, "plan", "starter"))
+		got, err := repo.Get(sub.Id, "plan")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "starter", got.Value)
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(sub.Id, "plan", "growth"))
+		got, err := repo.Get(sub.Id, "plan")
+		require.NoError(t, err)
+		assert.Equal(t, "growth", got.Value)
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListBySubscriptionId(sub.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(sub.Id, "plan"))
+		got, err := repo.Get(sub.Id, "plan")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
