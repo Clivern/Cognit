@@ -7,7 +7,6 @@ package auth
 import (
 	"crypto/subtle"
 	"fmt"
-	"net/http"
 
 	"github.com/clivern/cognit/pkg/util"
 )
@@ -15,8 +14,6 @@ import (
 const (
 	TypeAPIKey    = "api_key"
 	TypeBasicAuth = "basic_auth"
-
-	HeaderAPIKey = "X-API-Key"
 )
 
 // Auth is one identity credential: a type, a config map, and the key used
@@ -94,24 +91,4 @@ func (a *Auth) Match(presented map[string]string) error {
 	}
 
 	return ErrCredentials
-}
-
-// Presented reads the credential from a request.
-func (a *Auth) Presented(r *http.Request) (map[string]string, error) {
-	switch a.Type {
-	case TypeAPIKey:
-		value := r.Header.Get(HeaderAPIKey)
-		if value == "" {
-			return nil, ErrCredentials
-		}
-		return map[string]string{"value": value}, nil
-	case TypeBasicAuth:
-		username, password, ok := r.BasicAuth()
-		if !ok || username == "" || password == "" {
-			return nil, ErrCredentials
-		}
-		return map[string]string{"username": username, "password": password}, nil
-	default:
-		return nil, fmt.Errorf("%w: %s", ErrType, a.Type)
-	}
 }

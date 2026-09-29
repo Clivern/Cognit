@@ -4,7 +4,6 @@
 package auth
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,20 +16,8 @@ func TestUnitAuth(t *testing.T) {
 		require.NoError(t, auth.Encrypt())
 		assert.NotContains(t, auth.Config["value"], "secret")
 		require.NoError(t, auth.Validate())
-
-		req := newRequest(t)
-		req.Header.Set(HeaderAPIKey, "secret")
-		presented, err := auth.Presented(req)
-		require.NoError(t, err)
-		require.NoError(t, auth.Match(presented))
-
-		req.Header.Set(HeaderAPIKey, "wrong")
-		presented, err = auth.Presented(req)
-		require.NoError(t, err)
-		assert.ErrorIs(t, auth.Match(presented), ErrCredentials)
-
-		_, err = auth.Presented(newRequest(t))
-		assert.ErrorIs(t, err, ErrCredentials)
+		require.NoError(t, auth.Match(map[string]string{"value": "secret"}))
+		assert.ErrorIs(t, auth.Match(map[string]string{"value": "wrong"}), ErrCredentials)
 	})
 
 	t.Run("basic auth", func(t *testing.T) {
@@ -41,20 +28,8 @@ func TestUnitAuth(t *testing.T) {
 		)
 		require.NoError(t, auth.Encrypt())
 		require.NoError(t, auth.Validate())
-
-		req := newRequest(t)
-		req.SetBasicAuth("agent", "pass")
-		presented, err := auth.Presented(req)
-		require.NoError(t, err)
-		require.NoError(t, auth.Match(presented))
-
-		req.SetBasicAuth("agent", "wrong")
-		presented, err = auth.Presented(req)
-		require.NoError(t, err)
-		assert.ErrorIs(t, auth.Match(presented), ErrCredentials)
-
-		_, err = auth.Presented(newRequest(t))
-		assert.ErrorIs(t, err, ErrCredentials)
+		require.NoError(t, auth.Match(map[string]string{"username": "agent", "password": "pass"}))
+		assert.ErrorIs(t, auth.Match(map[string]string{"username": "agent", "password": "wrong"}), ErrCredentials)
 	})
 
 	t.Run("rejects incomplete config", func(t *testing.T) {
@@ -79,12 +54,4 @@ func TestUnitAuth(t *testing.T) {
 		auth.EncryptionKey = "wrong"
 		require.Error(t, auth.Validate())
 	})
-}
-
-func newRequest(t *testing.T) *http.Request {
-	t.Helper()
-
-	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	require.NoError(t, err)
-	return req
 }
