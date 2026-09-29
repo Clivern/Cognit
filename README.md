@@ -7,7 +7,7 @@
             <img alt="CI" src="https://github.com/clivern/cognit/actions/workflows/ci.yml/badge.svg">
         </a>
         <a href="https://github.com/clivern/cognit/releases">
-            <img src="https://img.shields.io/badge/Version-v0.1.0-red.svg">
+            <img src="https://img.shields.io/badge/Version-v0.1.0-orange.svg">
         </a>
         <a href="https://github.com/clivern/cognit/blob/main/LICENSE">
             <img src="https://img.shields.io/badge/LICENSE-MIT-blue.svg">
