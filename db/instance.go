@@ -16,17 +16,16 @@ const (
 
 // AgentInstance is a single row in the agent_instances table.
 type AgentInstance struct {
-	Id             Id
-	AgentId        Id
-	InstanceId     string
-	Address        string
-	Port           int
-	Datacenter     *string
-	Meta           *string
-	Status         string
-	LeaseExpiresAt time.Time
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	Id         Id
+	AgentId    Id
+	InstanceId string
+	Address    string
+	Port       int
+	Datacenter *string
+	Meta       *string
+	Status     string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 // AgentInstanceRepository is the interface for agent instance persistence.
@@ -68,7 +67,7 @@ type AgentInstanceMetaRepositoryPostgres struct {
 	db *sql.DB
 }
 
-const agentInstanceColumns = `id, agent_id, instance_id, address, port, datacenter, meta, status, lease_expires_at, created_at, updated_at`
+const agentInstanceColumns = `id, agent_id, instance_id, address, port, datacenter, meta, status, created_at, updated_at`
 
 // NewAgentInstanceRepository returns the repository for agent instances.
 func NewAgentInstanceRepository(db *sql.DB) AgentInstanceRepository {
@@ -88,8 +87,8 @@ func (r *AgentInstanceRepositoryPostgres) Create(instance *AgentInstance) error 
 
 	return r.db.QueryRow(
 		`INSERT INTO agent_instances
-		(id, agent_id, instance_id, address, port, datacenter, meta, status, lease_expires_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9)
+		(id, agent_id, instance_id, address, port, datacenter, meta, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)
 		RETURNING created_at, updated_at`,
 		instance.Id.String(),
 		instance.AgentId.String(),
@@ -99,7 +98,6 @@ func (r *AgentInstanceRepositoryPostgres) Create(instance *AgentInstance) error 
 		instance.Datacenter,
 		instance.Meta,
 		instance.Status,
-		instance.LeaseExpiresAt,
 	).Scan(&instance.CreatedAt, &instance.UpdatedAt)
 }
 
@@ -134,19 +132,17 @@ func (r *AgentInstanceRepositoryPostgres) GetByAgentAndInstanceId(agentId Id, in
 	return instance, err
 }
 
-// Update updates an agent instance lease and address.
+// Update updates an agent instance address and status.
 func (r *AgentInstanceRepositoryPostgres) Update(instance *AgentInstance) error {
 	_, err := r.db.Exec(
 		`UPDATE agent_instances
-		SET address = $1, port = $2, datacenter = $3, meta = $4::jsonb, status = $5,
-			lease_expires_at = $6, updated_at = $7
-		WHERE id = $8`,
+		SET address = $1, port = $2, datacenter = $3, meta = $4::jsonb, status = $5, updated_at = $6
+		WHERE id = $7`,
 		instance.Address,
 		instance.Port,
 		instance.Datacenter,
 		instance.Meta,
 		instance.Status,
-		instance.LeaseExpiresAt,
 		time.Now().UTC(),
 		instance.Id.String(),
 	)
@@ -170,15 +166,31 @@ func (r *AgentInstanceRepositoryPostgres) ListByAgentId(agentId Id) ([]*AgentIns
 	)
 }
 
-// ListLiveByAgentId lists instances whose lease is still valid.
+// ListLiveByAgentId lists instances still in the discovery pool.
+// The lease is the TTL health check. An instance is dropped when that TTL has
+// expired, or when any check is critical. Warning checks stay in the pool.
 func (r *AgentInstanceRepositoryPostgres) ListLiveByAgentId(agentId Id, now time.Time) ([]*AgentInstance, error) {
 	return r.list(
 		`SELECT `+agentInstanceColumns+`
 		FROM agent_instances
-		WHERE agent_id = $1 AND lease_expires_at > $2
+		WHERE agent_id = $1
+			AND EXISTS (
+				SELECT 1 FROM health_checks ttl
+				WHERE ttl.agent_instance_id = agent_instances.id
+					AND ttl.type = $3
+					AND ttl.status <> $4
+					AND ttl.ttl_expires_at > $2
+			)
+			AND NOT EXISTS (
+				SELECT 1 FROM health_checks hc
+				WHERE hc.agent_instance_id = agent_instances.id
+					AND hc.status = $4
+			)
 		ORDER BY instance_id`,
 		agentId.String(),
 		now,
+		HealthCheckTypeTTL,
+		HealthCheckStatusCritical,
 	)
 }
 
@@ -211,7 +223,6 @@ func scanAgentInstance(instance *AgentInstance) []any {
 		&instance.Datacenter,
 		&instance.Meta,
 		&instance.Status,
-		&instance.LeaseExpiresAt,
 		&instance.CreatedAt,
 		&instance.UpdatedAt,
 	}
