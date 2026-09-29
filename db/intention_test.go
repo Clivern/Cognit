@@ -84,3 +84,42 @@ func TestIntegrationIntentionRepository(t *testing.T) {
 		assert.Nil(t, matched)
 	})
 }
+
+func TestIntegrationIntentionMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	intention := &Intention{
+		WorkspaceId:      workspace.Id,
+		SourceAgent:      "a",
+		DestinationAgent: "b",
+		Action:           IntentionActionAllow,
+	}
+	require.NoError(t, NewIntentionRepository(database).Create(intention))
+	repo := NewIntentionMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(intention.Id, "note", "finance"))
+		got, err := repo.Get(intention.Id, "note")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "finance", got.Value)
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(intention.Id, "note", "updated"))
+		got, err := repo.Get(intention.Id, "note")
+		require.NoError(t, err)
+		assert.Equal(t, "updated", got.Value)
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByIntentionId(intention.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(intention.Id, "note"))
+		got, err := repo.Get(intention.Id, "note")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
