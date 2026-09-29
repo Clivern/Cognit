@@ -15,7 +15,7 @@
     </p>
 </p>
 
-Cognit is a Service Discovery Registry for AI Agents. Agents register, discover each other by skill, and call through a gateway that enforces health and policy on every request.
+Cognit is a Service Discovery Registry for AI Agents. Agents register, discover each other by skill, and call through a gateway that manages load balancing, health, and policy on every request.
 
 
 ### Versioning
