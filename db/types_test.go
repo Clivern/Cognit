@@ -16,4 +16,17 @@ func TestUnitId(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, id.String(), 36)
 	})
+	t.Run("Scan", func(t *testing.T) {
+		var id Id
+		require.NoError(t, id.Scan([]byte("11111111-1111-1111-1111-111111111111")))
+		assert.Equal(t, "11111111-1111-1111-1111-111111111111", id.String())
+
+		require.NoError(t, id.Scan("22222222-2222-2222-2222-222222222222"))
+		assert.Equal(t, "22222222-2222-2222-2222-222222222222", id.String())
+
+		require.NoError(t, id.Scan(nil))
+		assert.Equal(t, "", id.String())
+
+		assert.Error(t, id.Scan(42))
+	})
 }
