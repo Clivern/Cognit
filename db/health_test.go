@@ -175,6 +175,49 @@ func TestIntegrationListLiveByAgentId(t *testing.T) {
 	})
 }
 
+func TestIntegrationHealthCheckMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	agent := createTestAgent(t, database, workspace.Id, "health-meta-agent")
+	instance := createTestInstance(t, database, agent.Id, "health-meta-instance")
+	check := &HealthCheck{
+		AgentInstanceId: instance.Id,
+		CheckId:         "http",
+		Name:            "/health",
+		Type:            HealthCheckTypeHTTP,
+		Status:          HealthCheckStatusPassing,
+		Definition:      stringPtr(`{"http":"http://127.0.0.1/health"}`),
+	}
+	require.NoError(t, NewHealthCheckRepository(database).Create(check))
+	repo := NewHealthCheckMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(check.Id, "owner", "sre"))
+		got, err := repo.Get(check.Id, "owner")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "sre", got.Value)
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(check.Id, "owner", "platform"))
+		got, err := repo.Get(check.Id, "owner")
+		require.NoError(t, err)
+		assert.Equal(t, "platform", got.Value)
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByHealthCheckId(check.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(check.Id, "owner"))
+		got, err := repo.Get(check.Id, "owner")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
+
 func mustCheck(t *testing.T, repo HealthCheckRepository, instanceId Id, checkId string) *HealthCheck {
 	t.Helper()
 	got, err := repo.GetByInstanceAndCheckId(instanceId, checkId)
