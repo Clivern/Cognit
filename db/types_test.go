@@ -38,4 +38,8 @@ func TestUnitId(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "11111111-1111-1111-1111-111111111111", value)
 	})
+	t.Run("IsBotUser", func(t *testing.T) {
+		assert.True(t, IsBotUser(BotUserId))
+		assert.False(t, IsBotUser("11111111-1111-1111-1111-111111111111"))
+	})
 }
