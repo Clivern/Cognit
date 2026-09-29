@@ -61,3 +61,37 @@ func TestIntegrationAsyncTaskRepository(t *testing.T) {
 		assert.GreaterOrEqual(t, failed, int64(1))
 	})
 }
+
+func TestIntegrationAsyncTaskMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	task := &AsyncTask{WorkspaceId: workspace.Id, Type: AsyncTaskTypeNoop}
+	require.NoError(t, NewAsyncTaskRepository(database).Create(task))
+	repo := NewAsyncTaskMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(task.Id, "worker", "w1"))
+		got, err := repo.Get(task.Id, "worker")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "w1", got.Value)
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(task.Id, "worker", "w2"))
+		got, err := repo.Get(task.Id, "worker")
+		require.NoError(t, err)
+		assert.Equal(t, "w2", got.Value)
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByAsyncTaskId(task.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(task.Id, "worker"))
+		got, err := repo.Get(task.Id, "worker")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
