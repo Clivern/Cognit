@@ -13,7 +13,6 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/nats-io/nats.go v1.54.0
 	github.com/prometheus/client_golang v1.24.1
-	github.com/qdrant/go-client v1.19.3
 	github.com/resend/resend-go/v4 v4.7.0
 	github.com/rs/zerolog v1.35.1
 	github.com/samber/lo v1.53.0
@@ -22,7 +21,6 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/stripe/stripe-go/v86 v86.4.2
 	golang.org/x/crypto v0.57.0
-	google.golang.org/grpc v1.84.0
 )
 
 require (
@@ -62,6 +60,5 @@ require (
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260921155816-b14227669459 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )

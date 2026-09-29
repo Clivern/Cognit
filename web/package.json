@@ -1,7 +1,7 @@
 {
   "name": "Cognit",
   "version": "0.1.0",
-  "description": "The Autonomous Merge Layer for Agent-Scale Delivery",
+  "description": "A Service Discovery Registry for AI Agents",
   "type": "module",
   "scripts": {
     "dev": "vite",

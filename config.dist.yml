@@ -66,13 +66,6 @@ app:
     api_key: ${COGNIT_AI_OROUTE_API_KEY:-}
     embed:
       model: ${COGNIT_AI_OROUTE_EMBEDDING_MODEL:-openai/text-embedding-3-large}
-      qdb:
-        host: ${COGNIT_AI_QDRANT_HOST:-127.0.0.1}
-        port: ${COGNIT_AI_QDRANT_PORT:-6334}
-        api_key: ${COGNIT_AI_QDRANT_API_KEY:-}
-        use_tls: ${COGNIT_AI_QDRANT_USE_TLS:-false}
-        vector_size: ${COGNIT_AI_QDRANT_VECTOR_SIZE:-1024}
-        pool_size: ${COGNIT_AI_QDRANT_POOL_SIZE:-3}
     llm:
       lite:
         model: ${COGNIT_AI_LITE_LLM_MODEL:-cohere/command-r}

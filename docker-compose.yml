@@ -16,12 +16,6 @@ services:
       timeout: 5s
       retries: 10
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    restart: unless-stopped
-    volumes:
-      - qdrant_data:/qdrant/storage
-
   nats:
     image: nats:2-alpine
     restart: unless-stopped
@@ -55,8 +49,6 @@ services:
       COGNIT_DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
       COGNIT_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
-      COGNIT_AI_QDRANT_HOST: qdrant
-      COGNIT_AI_QDRANT_PORT: "6334"
       COGNIT_BROKER_URL: nats://nats:4222
       COGNIT_AI_OROUTE_API_KEY: ${COGNIT_AI_OROUTE_API_KEY:-}
       COGNIT_RESEND_API_KEY: ${COGNIT_RESEND_API_KEY:-}
@@ -70,8 +62,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      qdrant:
-        condition: service_started
       nats:
         condition: service_started
       migrate:
@@ -89,5 +79,4 @@ services:
 
 volumes:
   postgres_data:
-  qdrant_data:
   cognit_data:

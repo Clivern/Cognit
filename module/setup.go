@@ -85,7 +85,7 @@ func (s *Setup) Install(req *SetupRequest) error {
 
 	err = s.ConfigRepository.Create(
 		"platform_description",
-		"The Autonomous Merge Layer for Agent-Scale Delivery",
+		"A Service Discovery Registry for AI Agents",
 	)
 	if err != nil {
 		return fmt.Errorf("%w: create platform_description config: %v", ErrFailedCompleteSetup, err)
