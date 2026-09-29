@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrEmpty    = errors.New("lb: no instances")
+	ErrEmpty    = errors.New("lb: no agent instances")
 	ErrStrategy = errors.New("lb: unknown strategy")
 )
 
@@ -23,25 +23,26 @@ const (
 	LeastOutstandingTasks Strategy = "least_outstanding_tasks"
 )
 
-// Strategy is how Pick chooses among passing instances.
+// Strategy is how Pick chooses among live replicas of an agent.
 type Strategy string
 
-// Instance is a live agent instance in the discovery pool.
-type Instance struct {
-	ID          string
-	Datacenter  string
+// AgentInstance is one live replica of an agent. Map it from db.AgentInstance
+// plus current outstanding-task count.
+type AgentInstance struct {
+	InstanceId  string
+	Address     string
+	Port        int
 	Outstanding int
 }
 
-// Options control how Pick chooses an instance.
+// Options control how Pick chooses a replica.
 type Options struct {
-	Strategy         Strategy
-	Pool             string
-	PreferDatacenter string
-	StickyKey        string
+	Strategy  Strategy
+	Agent     string
+	StickyKey string
 }
 
-// Picker selects an instance from a live pool.
+// Picker selects a live agent instance.
 type Picker struct {
 	mu   sync.Mutex
 	next map[string]int
@@ -56,17 +57,15 @@ func New() *Picker {
 	}
 }
 
-// Pick returns one instance from the live pool.
-// StickyKey pins a task to the same instance while that instance stays in the pool.
-// PreferDatacenter keeps traffic in that DC when any instance is there.
-func (p *Picker) Pick(instances []Instance, opts Options) (*Instance, error) {
-	pool := filter(instances, opts.PreferDatacenter)
-	if len(pool) == 0 {
+// Pick returns one live replica of an agent.
+// StickyKey pins a task to the same replica while it stays in the pool.
+func (p *Picker) Pick(instances []AgentInstance, opts Options) (*AgentInstance, error) {
+	if len(instances) == 0 {
 		return nil, ErrEmpty
 	}
 
 	if opts.StickyKey != "" {
-		picked := sticky(pool, opts.StickyKey)
+		picked := sticky(instances, opts.StickyKey)
 		return &picked, nil
 	}
 
@@ -75,22 +74,22 @@ func (p *Picker) Pick(instances []Instance, opts Options) (*Instance, error) {
 		strategy = Random
 	}
 
-	var picked Instance
+	var picked AgentInstance
 	switch strategy {
 	case Random:
-		picked = pool[p.intn(len(pool))]
+		picked = instances[p.intn(len(instances))]
 	case RoundRobin:
-		picked = p.roundRobin(opts.Pool, pool)
+		picked = p.roundRobin(opts.Agent, instances)
 	case LeastOutstandingTasks:
-		picked = p.leastOutstanding(pool)
+		picked = p.leastOutstanding(instances)
 	default:
 		return nil, ErrStrategy
 	}
 	return &picked, nil
 }
 
-// Shuffle returns a copy of instances in random order, like Consul DNS.
-func (p *Picker) Shuffle(instances []Instance) []Instance {
+// Shuffle returns a copy of agent instances in random order, like Consul DNS.
+func (p *Picker) Shuffle(instances []AgentInstance) []AgentInstance {
 	out := slices.Clone(instances)
 	for i := len(out) - 1; i > 0; i-- {
 		j := p.intn(i + 1)
@@ -99,18 +98,18 @@ func (p *Picker) Shuffle(instances []Instance) []Instance {
 	return out
 }
 
-func (p *Picker) roundRobin(pool string, instances []Instance) Instance {
+func (p *Picker) roundRobin(agent string, instances []AgentInstance) AgentInstance {
 	ordered := ordered(instances)
 
 	p.mu.Lock()
-	i := p.next[pool]
-	p.next[pool] = i + 1
+	i := p.next[agent]
+	p.next[agent] = i + 1
 	p.mu.Unlock()
 
 	return ordered[i%len(ordered)]
 }
 
-func (p *Picker) leastOutstanding(instances []Instance) Instance {
+func (p *Picker) leastOutstanding(instances []AgentInstance) AgentInstance {
 	min := instances[0].Outstanding
 	for _, inst := range instances[1:] {
 		if inst.Outstanding < min {
@@ -118,7 +117,7 @@ func (p *Picker) leastOutstanding(instances []Instance) Instance {
 		}
 	}
 
-	var tied []Instance
+	var tied []AgentInstance
 	for _, inst := range instances {
 		if inst.Outstanding == min {
 			tied = append(tied, inst)
@@ -127,32 +126,15 @@ func (p *Picker) leastOutstanding(instances []Instance) Instance {
 	return tied[p.intn(len(tied))]
 }
 
-func filter(instances []Instance, datacenter string) []Instance {
-	if datacenter == "" || len(instances) == 0 {
-		return slices.Clone(instances)
-	}
-
-	var matched []Instance
-	for _, inst := range instances {
-		if inst.Datacenter == datacenter {
-			matched = append(matched, inst)
-		}
-	}
-	if len(matched) == 0 {
-		return slices.Clone(instances)
-	}
-	return matched
-}
-
-func ordered(instances []Instance) []Instance {
+func ordered(instances []AgentInstance) []AgentInstance {
 	out := slices.Clone(instances)
-	slices.SortFunc(out, func(a, b Instance) int {
-		return cmp.Compare(a.ID, b.ID)
+	slices.SortFunc(out, func(a, b AgentInstance) int {
+		return cmp.Compare(a.InstanceId, b.InstanceId)
 	})
 	return out
 }
 
-func sticky(instances []Instance, key string) Instance {
+func sticky(instances []AgentInstance, key string) AgentInstance {
 	pool := ordered(instances)
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(key))
