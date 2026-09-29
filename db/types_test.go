@@ -29,4 +29,13 @@ func TestUnitId(t *testing.T) {
 
 		assert.Error(t, id.Scan(42))
 	})
+	t.Run("Value", func(t *testing.T) {
+		value, err := Id("").Value()
+		require.NoError(t, err)
+		assert.Nil(t, value)
+
+		value, err = Id("11111111-1111-1111-1111-111111111111").Value()
+		require.NoError(t, err)
+		assert.Equal(t, "11111111-1111-1111-1111-111111111111", value)
+	})
 }
