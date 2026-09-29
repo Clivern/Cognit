@@ -112,3 +112,35 @@ func TestIntegrationUserGetBot(t *testing.T) {
 		assert.Equal(t, BotUserName, got.Name)
 	})
 }
+
+func TestIntegrationUserMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	user := createTestUser(t, database)
+	repo := NewUserMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(user.Id, "plan", `{"v":"pro"}`))
+		got, err := repo.Get(user.Id, "plan")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Contains(t, got.Value, "pro")
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(user.Id, "plan", `{"v":"team"}`))
+		got, err := repo.Get(user.Id, "plan")
+		require.NoError(t, err)
+		assert.Contains(t, got.Value, "team")
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByUser(user.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(user.Id, "plan"))
+		got, err := repo.Get(user.Id, "plan")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
