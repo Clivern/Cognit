@@ -10,35 +10,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationAgentAuthRepository(t *testing.T) {
+func TestIntegrationAgentIdentityRepository(t *testing.T) {
 	database := openTestDB(t)
 	workspace := createTestWorkspace(t, database)
-	agent := createTestAgent(t, database, workspace.Id, "auth-agent")
-	repo := NewAgentAuthRepository(database)
+	agent := createTestAgent(t, database, workspace.Id, "identity-agent")
+	repo := NewAgentIdentityRepository(database)
 
 	t.Run("create and get", func(t *testing.T) {
-		auth := &AgentAuth{
+		identity := &AgentIdentity{
 			AgentId:  agent.Id,
 			Name:     "gateway-key",
-			Type:     AgentAuthTypeAPIKey,
-			Config:   `{"header":"X-API-Key","value":"secret"}`,
+			Type:     AgentIdentityTypeAPIKey,
+			Config:   `{"hash":"7a1c"}`,
 			IsActive: true,
 		}
-		require.NoError(t, repo.Create(auth))
+		require.NoError(t, repo.Create(identity))
 
-		got, err := repo.GetById(auth.Id)
+		got, err := repo.GetById(identity.Id)
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		assert.Equal(t, agent.Id, got.AgentId)
 		assert.Equal(t, "gateway-key", got.Name)
-		assert.Equal(t, AgentAuthTypeAPIKey, got.Type)
+		assert.Equal(t, AgentIdentityTypeAPIKey, got.Type)
 		assert.True(t, got.IsActive)
-		assert.Contains(t, got.Config, "X-API-Key")
+		assert.Contains(t, got.Config, "7a1c")
 
 		byName, err := repo.GetByAgentAndName(agent.Id, "gateway-key")
 		require.NoError(t, err)
 		require.NotNil(t, byName)
-		assert.Equal(t, auth.Id, byName.Id)
+		assert.Equal(t, identity.Id, byName.Id)
 	})
 
 	t.Run("missing row", func(t *testing.T) {
@@ -55,25 +55,25 @@ func TestIntegrationAgentAuthRepository(t *testing.T) {
 	})
 
 	t.Run("update list and delete", func(t *testing.T) {
-		basic := &AgentAuth{
+		basic := &AgentIdentity{
 			AgentId:  agent.Id,
 			Name:     "basic",
-			Type:     AgentAuthTypeBasicAuth,
-			Config:   `{"username":"agent","password":"pass"}`,
+			Type:     AgentIdentityTypeBasicAuth,
+			Config:   `{"hash":"b91d"}`,
 			IsActive: true,
 		}
 		require.NoError(t, repo.Create(basic))
 
-		oauth := &AgentAuth{
+		partner := &AgentIdentity{
 			AgentId:  agent.Id,
-			Name:     "oauth",
-			Type:     AgentAuthTypeClientCredentials,
-			Config:   `{"token_url":"https://idp.test/token","client_id":"id","client_secret":"secret"}`,
+			Name:     "partner-key",
+			Type:     AgentIdentityTypeAPIKey,
+			Config:   `{"hash":"c02e"}`,
 			IsActive: true,
 		}
-		require.NoError(t, repo.Create(oauth))
+		require.NoError(t, repo.Create(partner))
 
-		basic.Config = `{"username":"agent","password":"rotated"}`
+		basic.Config = `{"hash":"rotated"}`
 		basic.IsActive = false
 		require.NoError(t, repo.Update(basic))
 
@@ -101,29 +101,29 @@ func TestIntegrationAgentAuthRepository(t *testing.T) {
 	})
 
 	t.Run("unique name per agent", func(t *testing.T) {
-		duplicate := &AgentAuth{
+		duplicate := &AgentIdentity{
 			AgentId:  agent.Id,
 			Name:     "gateway-key",
-			Type:     AgentAuthTypeAPIKey,
-			Config:   `{"header":"X-API-Key","value":"other"}`,
+			Type:     AgentIdentityTypeAPIKey,
+			Config:   `{"hash":"d73f"}`,
 			IsActive: true,
 		}
 		assert.Error(t, repo.Create(duplicate))
 	})
 
 	t.Run("cascade delete with agent", func(t *testing.T) {
-		other := createTestAgent(t, database, workspace.Id, "cascade-auth-agent")
-		auth := &AgentAuth{
+		other := createTestAgent(t, database, workspace.Id, "cascade-identity-agent")
+		identity := &AgentIdentity{
 			AgentId:  other.Id,
 			Name:     "gateway-key",
-			Type:     AgentAuthTypeAPIKey,
-			Config:   `{"header":"X-API-Key","value":"secret"}`,
+			Type:     AgentIdentityTypeAPIKey,
+			Config:   `{"hash":"e58a"}`,
 			IsActive: true,
 		}
-		require.NoError(t, repo.Create(auth))
+		require.NoError(t, repo.Create(identity))
 		require.NoError(t, NewAgentRepository(database).Delete(other.Id))
 
-		got, err := repo.GetById(auth.Id)
+		got, err := repo.GetById(identity.Id)
 		require.NoError(t, err)
 		assert.Nil(t, got)
 	})

@@ -1,4 +1,4 @@
-CREATE TABLE agent_auths (
+CREATE TABLE agent_identity (
 	id UUID PRIMARY KEY,
 	agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
 	name VARCHAR(100) NOT NULL,
@@ -9,4 +9,4 @@ CREATE TABLE agent_auths (
 	updated_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
 	UNIQUE (agent_id, name)
 );
-CREATE INDEX idx_agent_auths_agent_id ON agent_auths(agent_id);
+CREATE INDEX idx_agent_identity_agent_id ON agent_identity(agent_id);
