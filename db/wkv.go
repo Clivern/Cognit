@@ -77,7 +77,15 @@ func (r *WorkspaceKVRepositoryPostgres) Get(workspaceId Id, key string) (*Worksp
 		workspaceId.String(),
 		key,
 		time.Now().UTC(),
-	).Scan(scanWorkspaceKV(item)...)
+	).Scan(
+		&item.Id,
+		&item.WorkspaceId,
+		&item.Key,
+		&item.Value,
+		&item.ExpiresAt,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	)
 	if isNotFound(err) {
 		return nil, nil
 	}
@@ -115,7 +123,15 @@ func (r *WorkspaceKVRepositoryPostgres) ListByPrefix(workspaceId Id, prefix stri
 	var list []*WorkspaceKV
 	for rows.Next() {
 		item := &WorkspaceKV{}
-		err := rows.Scan(scanWorkspaceKV(item)...)
+		err := rows.Scan(
+			&item.Id,
+			&item.WorkspaceId,
+			&item.Key,
+			&item.Value,
+			&item.ExpiresAt,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -134,16 +150,4 @@ func (r *WorkspaceKVRepositoryPostgres) DeleteExpired() (int64, error) {
 		return 0, err
 	}
 	return result.RowsAffected()
-}
-
-func scanWorkspaceKV(item *WorkspaceKV) []any {
-	return []any{
-		&item.Id,
-		&item.WorkspaceId,
-		&item.Key,
-		&item.Value,
-		&item.ExpiresAt,
-		&item.CreatedAt,
-		&item.UpdatedAt,
-	}
 }
