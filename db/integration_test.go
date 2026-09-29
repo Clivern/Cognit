@@ -54,3 +54,42 @@ func TestIntegrationIntegrationsRepository(t *testing.T) {
 		assert.Nil(t, got)
 	})
 }
+
+func TestIntegrationIntegrationMetaRepository(t *testing.T) {
+	database := openTestDB(t)
+	workspace := createTestWorkspace(t, database)
+	item := &Integration{
+		WorkspaceId: workspace.Id,
+		Type:        "slack",
+		Name:        "ops",
+		Config:      stringPtr(`{}`),
+	}
+	require.NoError(t, NewIntegrationRepository(database).Create(item))
+	repo := NewIntegrationMetaRepository(database)
+
+	t.Run("create and get", func(t *testing.T) {
+		require.NoError(t, repo.Create(item.Id, "channel", `{"v":"alerts"}`))
+		got, err := repo.Get(item.Id, "channel")
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Contains(t, got.Value, "alerts")
+	})
+
+	t.Run("upsert", func(t *testing.T) {
+		require.NoError(t, repo.Upsert(item.Id, "channel", `{"v":"incidents"}`))
+		got, err := repo.Get(item.Id, "channel")
+		require.NoError(t, err)
+		assert.Contains(t, got.Value, "incidents")
+	})
+
+	t.Run("list and delete", func(t *testing.T) {
+		list, err := repo.ListByIntegrationId(item.Id)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+
+		require.NoError(t, repo.Delete(item.Id, "channel"))
+		got, err := repo.Get(item.Id, "channel")
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+}
