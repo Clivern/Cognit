@@ -38,6 +38,26 @@ const (
 
 	CanListWorkspaceAudits = "CAN_LIST_WORKSPACE_AUDITS"
 	CanGetWorkspaceAudit   = "CAN_GET_WORKSPACE_AUDIT"
+
+	CanListAgents  = "CAN_LIST_AGENTS"
+	CanGetAgent    = "CAN_GET_AGENT"
+	CanUpsertAgent = "CAN_UPSERT_AGENT"
+	CanDeleteAgent = "CAN_DELETE_AGENT"
+
+	CanListIntentions  = "CAN_LIST_INTENTIONS"
+	CanGetIntention    = "CAN_GET_INTENTION"
+	CanCreateIntention = "CAN_CREATE_INTENTION"
+	CanUpdateIntention = "CAN_UPDATE_INTENTION"
+	CanDeleteIntention = "CAN_DELETE_INTENTION"
+	CanCheckIntention  = "CAN_CHECK_INTENTION"
+
+	CanListKV   = "CAN_LIST_KV"
+	CanGetKV    = "CAN_GET_KV"
+	CanPutKV    = "CAN_PUT_KV"
+	CanDeleteKV = "CAN_DELETE_KV"
+
+	CanListTraffic = "CAN_LIST_TRAFFIC"
+	CanGetTraffic  = "CAN_GET_TRAFFIC"
 )
 
 var (
@@ -117,7 +137,16 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 
 	switch permission {
 	case CanGetWorkspace,
-		CanGetWorkspaceBilling:
+		CanGetWorkspaceBilling,
+		CanListAgents,
+		CanGetAgent,
+		CanListIntentions,
+		CanGetIntention,
+		CanCheckIntention,
+		CanListKV,
+		CanGetKV,
+		CanListTraffic,
+		CanGetTraffic:
 		return true, nil
 	case CanUpdateWorkspace,
 		CanDeleteWorkspace,
@@ -134,7 +163,14 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 		CanGetAccessKey,
 		CanDeleteAccessKey,
 		CanListWorkspaceAudits,
-		CanGetWorkspaceAudit:
+		CanGetWorkspaceAudit,
+		CanUpsertAgent,
+		CanDeleteAgent,
+		CanCreateIntention,
+		CanUpdateIntention,
+		CanDeleteIntention,
+		CanPutKV,
+		CanDeleteKV:
 		return membership.Role == db.UserRoleAdmin || membership.Role == db.UserRoleOwner, nil
 	default:
 		return false, nil
