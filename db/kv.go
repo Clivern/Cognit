@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// KV is a key/value row with an optional expiry.
-type KV struct {
+// KeyValue is a key/value row with an optional expiry.
+type KeyValue struct {
 	Id        Id
 	Key       string
 	Value     string
@@ -18,25 +18,25 @@ type KV struct {
 	UpdatedAt time.Time
 }
 
-// KVRepository is a generic expiry-aware key/value store.
-type KVRepository interface {
-	Upsert(item *KV) error
-	Get(key string) (*KV, error)
+// KeyValueRepository is a generic expiry-aware key/value store.
+type KeyValueRepository interface {
+	Upsert(item *KeyValue) error
+	Get(key string) (*KeyValue, error)
 	Delete(key string) error
 	DeleteExpired() (int64, error)
 }
 
-type KVRepositoryPostgres struct {
+type KeyValueRepositoryPostgres struct {
 	db *sql.DB
 }
 
-// NewKVRepository returns the repository for the kv table.
-func NewKVRepository(db *sql.DB) KVRepository {
-	return &KVRepositoryPostgres{db: db}
+// NewKeyValueRepository returns the repository for the kv table.
+func NewKeyValueRepository(db *sql.DB) KeyValueRepository {
+	return &KeyValueRepositoryPostgres{db: db}
 }
 
 // Upsert inserts or replaces a key/value row.
-func (r *KVRepositoryPostgres) Upsert(item *KV) error {
+func (r *KeyValueRepositoryPostgres) Upsert(item *KeyValue) error {
 	id, err := NewId()
 	if err != nil {
 		return err
@@ -62,8 +62,8 @@ func (r *KVRepositoryPostgres) Upsert(item *KV) error {
 }
 
 // Get returns a non-expired value for key. A null expires_at never expires.
-func (r *KVRepositoryPostgres) Get(key string) (*KV, error) {
-	item := &KV{}
+func (r *KeyValueRepositoryPostgres) Get(key string) (*KeyValue, error) {
+	item := &KeyValue{}
 	err := r.db.QueryRow(
 		`SELECT id, key, value, expires_at, created_at, updated_at
 		FROM kv
@@ -86,13 +86,13 @@ func (r *KVRepositoryPostgres) Get(key string) (*KV, error) {
 }
 
 // Delete removes a key/value row.
-func (r *KVRepositoryPostgres) Delete(key string) error {
+func (r *KeyValueRepositoryPostgres) Delete(key string) error {
 	_, err := r.db.Exec(`DELETE FROM kv WHERE key = $1`, key)
 	return err
 }
 
 // DeleteExpired removes rows that have passed their expiry.
-func (r *KVRepositoryPostgres) DeleteExpired() (int64, error) {
+func (r *KeyValueRepositoryPostgres) DeleteExpired() (int64, error) {
 	result, err := r.db.Exec(
 		`DELETE FROM kv WHERE expires_at IS NOT NULL AND expires_at <= $1`,
 		time.Now().UTC(),

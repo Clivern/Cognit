@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// WorkspaceKV is a workspace-scoped key/value row with an optional expiry.
-type WorkspaceKV struct {
+// WorkspaceKeyValue is a workspace-scoped key/value row with an optional expiry.
+type WorkspaceKeyValue struct {
 	Id          Id
 	WorkspaceId Id
 	Key         string
@@ -19,26 +19,26 @@ type WorkspaceKV struct {
 	UpdatedAt   time.Time
 }
 
-// WorkspaceKVRepository is the interface for workspace KV persistence.
-type WorkspaceKVRepository interface {
-	Upsert(item *WorkspaceKV) error
-	Get(workspaceId Id, key string) (*WorkspaceKV, error)
+// WorkspaceKeyValueRepository is the interface for workspace key-value persistence.
+type WorkspaceKeyValueRepository interface {
+	Upsert(item *WorkspaceKeyValue) error
+	Get(workspaceId Id, key string) (*WorkspaceKeyValue, error)
 	Delete(workspaceId Id, key string) error
-	ListByPrefix(workspaceId Id, prefix string) ([]*WorkspaceKV, error)
+	ListByPrefix(workspaceId Id, prefix string) ([]*WorkspaceKeyValue, error)
 	DeleteExpired() (int64, error)
 }
 
-type WorkspaceKVRepositoryPostgres struct {
+type WorkspaceKeyValueRepositoryPostgres struct {
 	db *sql.DB
 }
 
-// NewWorkspaceKVRepository returns the repository for workspace_kv.
-func NewWorkspaceKVRepository(db *sql.DB) WorkspaceKVRepository {
-	return &WorkspaceKVRepositoryPostgres{db: db}
+// NewWorkspaceKeyValueRepository returns the repository for workspace_kv.
+func NewWorkspaceKeyValueRepository(db *sql.DB) WorkspaceKeyValueRepository {
+	return &WorkspaceKeyValueRepositoryPostgres{db: db}
 }
 
 // Upsert inserts or replaces a workspace key/value row.
-func (r *WorkspaceKVRepositoryPostgres) Upsert(item *WorkspaceKV) error {
+func (r *WorkspaceKeyValueRepositoryPostgres) Upsert(item *WorkspaceKeyValue) error {
 	id, err := NewId()
 	if err != nil {
 		return err
@@ -65,8 +65,8 @@ func (r *WorkspaceKVRepositoryPostgres) Upsert(item *WorkspaceKV) error {
 }
 
 // Get returns a non-expired value for a workspace key.
-func (r *WorkspaceKVRepositoryPostgres) Get(workspaceId Id, key string) (*WorkspaceKV, error) {
-	item := &WorkspaceKV{}
+func (r *WorkspaceKeyValueRepositoryPostgres) Get(workspaceId Id, key string) (*WorkspaceKeyValue, error) {
+	item := &WorkspaceKeyValue{}
 	err := r.db.QueryRow(
 		`SELECT id, workspace_id, key, value, expires_at, created_at, updated_at
 		FROM workspace_kv
@@ -91,7 +91,7 @@ func (r *WorkspaceKVRepositoryPostgres) Get(workspaceId Id, key string) (*Worksp
 }
 
 // Delete removes a workspace key/value row.
-func (r *WorkspaceKVRepositoryPostgres) Delete(workspaceId Id, key string) error {
+func (r *WorkspaceKeyValueRepositoryPostgres) Delete(workspaceId Id, key string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM workspace_kv WHERE workspace_id = $1 AND key = $2`,
 		workspaceId.String(),
@@ -101,7 +101,7 @@ func (r *WorkspaceKVRepositoryPostgres) Delete(workspaceId Id, key string) error
 }
 
 // ListByPrefix lists non-expired keys in a workspace that start with prefix.
-func (r *WorkspaceKVRepositoryPostgres) ListByPrefix(workspaceId Id, prefix string) ([]*WorkspaceKV, error) {
+func (r *WorkspaceKeyValueRepositoryPostgres) ListByPrefix(workspaceId Id, prefix string) ([]*WorkspaceKeyValue, error) {
 	rows, err := r.db.Query(
 		`SELECT id, workspace_id, key, value, expires_at, created_at, updated_at
 		FROM workspace_kv
@@ -118,9 +118,9 @@ func (r *WorkspaceKVRepositoryPostgres) ListByPrefix(workspaceId Id, prefix stri
 	}
 	defer rows.Close()
 
-	var list []*WorkspaceKV
+	var list []*WorkspaceKeyValue
 	for rows.Next() {
-		item := &WorkspaceKV{}
+		item := &WorkspaceKeyValue{}
 		err := rows.Scan(
 			&item.Id,
 			&item.WorkspaceId,
@@ -139,7 +139,7 @@ func (r *WorkspaceKVRepositoryPostgres) ListByPrefix(workspaceId Id, prefix stri
 }
 
 // DeleteExpired removes rows that have passed their expiry.
-func (r *WorkspaceKVRepositoryPostgres) DeleteExpired() (int64, error) {
+func (r *WorkspaceKeyValueRepositoryPostgres) DeleteExpired() (int64, error) {
 	result, err := r.db.Exec(
 		`DELETE FROM workspace_kv WHERE expires_at IS NOT NULL AND expires_at <= $1`,
 		time.Now().UTC(),

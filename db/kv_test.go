@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationKVRepository(t *testing.T) {
+func TestIntegrationKeyValueRepository(t *testing.T) {
 	database := openTestDB(t)
-	repo := NewKVRepository(database)
+	repo := NewKeyValueRepository(database)
 	key := "k-" + uuid.NewString()[:8]
 
 	t.Run("upsert and get", func(t *testing.T) {
-		require.NoError(t, repo.Upsert(&KV{Key: key, Value: "one"}))
+		require.NoError(t, repo.Upsert(&KeyValue{Key: key, Value: "one"}))
 		got, err := repo.Get(key)
 		require.NoError(t, err)
 		require.NotNil(t, got)
@@ -27,7 +27,7 @@ func TestIntegrationKVRepository(t *testing.T) {
 	})
 
 	t.Run("replace value", func(t *testing.T) {
-		require.NoError(t, repo.Upsert(&KV{Key: key, Value: "two"}))
+		require.NoError(t, repo.Upsert(&KeyValue{Key: key, Value: "two"}))
 		got, err := repo.Get(key)
 		require.NoError(t, err)
 		assert.Equal(t, "two", got.Value)
@@ -35,7 +35,7 @@ func TestIntegrationKVRepository(t *testing.T) {
 
 	t.Run("expired key is hidden", func(t *testing.T) {
 		expiredKey := "k-" + uuid.NewString()[:8]
-		require.NoError(t, repo.Upsert(&KV{
+		require.NoError(t, repo.Upsert(&KeyValue{
 			Key:       expiredKey,
 			Value:     "gone",
 			ExpiresAt: timePtr(time.Now().UTC().Add(-time.Minute)),

@@ -9,19 +9,19 @@ import (
 	"github.com/clivern/cognit/db"
 )
 
-// Cache is a kv-backed cache.
+// Cache is a key-value-backed cache.
 type Cache struct {
-	kv db.KVRepository
+	store db.KeyValueRepository
 }
 
-// NewCache returns a kv-backed cache.
-func NewCache(kv db.KVRepository) *Cache {
-	return &Cache{kv: kv}
+// NewCache returns a key-value-backed cache.
+func NewCache(store db.KeyValueRepository) *Cache {
+	return &Cache{store: store}
 }
 
 // Get returns a value for key, or empty if missing/expired.
 func (c *Cache) Get(key string) (string, *time.Time, error) {
-	item, err := c.kv.Get(key)
+	item, err := c.store.Get(key)
 	if err != nil {
 		return "", nil, err
 	}
@@ -34,7 +34,7 @@ func (c *Cache) Get(key string) (string, *time.Time, error) {
 
 // Set stores a value for key.
 func (c *Cache) Set(key, value string, expiresAt *time.Time) error {
-	return c.kv.Upsert(&db.KV{
+	return c.store.Upsert(&db.KeyValue{
 		Key:       key,
 		Value:     value,
 		ExpiresAt: expiresAt,
@@ -43,5 +43,5 @@ func (c *Cache) Set(key, value string, expiresAt *time.Time) error {
 
 // DeleteExpired removes expired cache entries.
 func (c *Cache) DeleteExpired() (int64, error) {
-	return c.kv.DeleteExpired()
+	return c.store.DeleteExpired()
 }

@@ -11,15 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationWorkspaceKVRepository(t *testing.T) {
+func TestIntegrationWorkspaceKeyValueRepository(t *testing.T) {
 	database := openTestDB(t)
 	workspace := createTestWorkspace(t, database)
 	other := createTestWorkspace(t, database)
-	repo := NewWorkspaceKVRepository(database)
+	repo := NewWorkspaceKeyValueRepository(database)
 	key := "agents/invoice-extractor/model"
 
 	t.Run("upsert and get", func(t *testing.T) {
-		item := &WorkspaceKV{WorkspaceId: workspace.Id, Key: key, Value: "gpt-5"}
+		item := &WorkspaceKeyValue{WorkspaceId: workspace.Id, Key: key, Value: "gpt-5"}
 		require.NoError(t, repo.Upsert(item))
 		assert.NotEmpty(t, item.Id.String())
 
@@ -32,7 +32,7 @@ func TestIntegrationWorkspaceKVRepository(t *testing.T) {
 	})
 
 	t.Run("replace value", func(t *testing.T) {
-		require.NoError(t, repo.Upsert(&WorkspaceKV{
+		require.NoError(t, repo.Upsert(&WorkspaceKeyValue{
 			WorkspaceId: workspace.Id,
 			Key:         key,
 			Value:       "gpt-4",
@@ -43,7 +43,7 @@ func TestIntegrationWorkspaceKVRepository(t *testing.T) {
 	})
 
 	t.Run("keys are isolated per workspace", func(t *testing.T) {
-		require.NoError(t, repo.Upsert(&WorkspaceKV{
+		require.NoError(t, repo.Upsert(&WorkspaceKeyValue{
 			WorkspaceId: other.Id,
 			Key:         key,
 			Value:       "other",
@@ -58,12 +58,12 @@ func TestIntegrationWorkspaceKVRepository(t *testing.T) {
 	})
 
 	t.Run("list by prefix", func(t *testing.T) {
-		require.NoError(t, repo.Upsert(&WorkspaceKV{
+		require.NoError(t, repo.Upsert(&WorkspaceKeyValue{
 			WorkspaceId: workspace.Id,
 			Key:         "agents/invoice-extractor/region",
 			Value:       "eu",
 		}))
-		require.NoError(t, repo.Upsert(&WorkspaceKV{
+		require.NoError(t, repo.Upsert(&WorkspaceKeyValue{
 			WorkspaceId: workspace.Id,
 			Key:         "flags/beta",
 			Value:       "on",
@@ -78,7 +78,7 @@ func TestIntegrationWorkspaceKVRepository(t *testing.T) {
 
 	t.Run("expired key is hidden", func(t *testing.T) {
 		expiredKey := "agents/invoice-extractor/stale"
-		require.NoError(t, repo.Upsert(&WorkspaceKV{
+		require.NoError(t, repo.Upsert(&WorkspaceKeyValue{
 			WorkspaceId: workspace.Id,
 			Key:         expiredKey,
 			Value:       "gone",

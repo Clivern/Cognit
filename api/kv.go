@@ -18,8 +18,8 @@ import (
 	"github.com/samber/lo"
 )
 
-// ListKVAction lists workspace keys, optionally filtered by prefix.
-func ListKVAction(w http.ResponseWriter, r *http.Request) {
+// ListKeyValueAction lists workspace keys, optionally filtered by prefix.
+func ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -28,18 +28,18 @@ func ListKVAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	km := module.NewKV(
-		db.NewWorkspaceKVRepository(db.GetDB()),
+	km := module.NewKeyValue(
+		db.NewWorkspaceKeyValueRepository(db.GetDB()),
 		db.NewWorkspaceRepository(db.GetDB()),
 	)
-	result, err := km.ListKV(db.Id(wid), r.URL.Query().Get("prefix"))
+	result, err := km.ListKeyValue(db.Id(wid), r.URL.Query().Get("prefix"))
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
 			util.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
-		case errors.Is(err, module.ErrInvalidKVKey):
+		case errors.Is(err, module.ErrInvalidKeyValueKey):
 			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
@@ -60,8 +60,8 @@ func ListKVAction(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetKVAction returns one workspace key. The key may contain slashes.
-func GetKVAction(w http.ResponseWriter, r *http.Request) {
+// GetKeyValueAction returns one workspace key. The key may contain slashes.
+func GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -78,22 +78,22 @@ func GetKVAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	km := module.NewKV(
-		db.NewWorkspaceKVRepository(db.GetDB()),
+	km := module.NewKeyValue(
+		db.NewWorkspaceKeyValueRepository(db.GetDB()),
 		db.NewWorkspaceRepository(db.GetDB()),
 	)
-	item, err := km.GetKV(db.Id(wid), key)
+	item, err := km.GetKeyValue(db.Id(wid), key)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
 			util.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
-		case errors.Is(err, module.ErrKVNotFound):
+		case errors.Is(err, module.ErrKeyValueNotFound):
 			util.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "kv_not_found"),
 			})
-		case errors.Is(err, module.ErrInvalidKVKey):
+		case errors.Is(err, module.ErrInvalidKeyValueKey):
 			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
@@ -109,8 +109,8 @@ func GetKVAction(w http.ResponseWriter, r *http.Request) {
 	util.WriteJSON(w, http.StatusOK, item)
 }
 
-// PutKVAction writes a workspace key.
-func PutKVAction(w http.ResponseWriter, r *http.Request) {
+// PutKeyValueAction writes a workspace key.
+func PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -127,7 +127,7 @@ func PutKVAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req module.PutKVRequest
+	var req module.PutKeyValueRequest
 	err := util.DecodeAndValidate(r, &req)
 	if err != nil {
 		util.WriteValidationError(w, err)
@@ -139,18 +139,18 @@ func PutKVAction(w http.ResponseWriter, r *http.Request) {
 		Str("key", key).
 		Msg("Writing workspace key")
 
-	km := module.NewKV(
-		db.NewWorkspaceKVRepository(db.GetDB()),
+	km := module.NewKeyValue(
+		db.NewWorkspaceKeyValueRepository(db.GetDB()),
 		db.NewWorkspaceRepository(db.GetDB()),
 	)
-	item, err := km.PutKV(db.Id(wid), key, &req)
+	item, err := km.PutKeyValue(db.Id(wid), key, &req)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
 			util.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
-		case errors.Is(err, module.ErrInvalidKVKey):
+		case errors.Is(err, module.ErrInvalidKeyValueKey):
 			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
@@ -170,8 +170,8 @@ func PutKVAction(w http.ResponseWriter, r *http.Request) {
 	util.WriteJSON(w, http.StatusOK, item)
 }
 
-// DeleteKVAction removes a workspace key.
-func DeleteKVAction(w http.ResponseWriter, r *http.Request) {
+// DeleteKeyValueAction removes a workspace key.
+func DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -193,22 +193,22 @@ func DeleteKVAction(w http.ResponseWriter, r *http.Request) {
 		Str("key", key).
 		Msg("Deleting workspace key")
 
-	km := module.NewKV(
-		db.NewWorkspaceKVRepository(db.GetDB()),
+	km := module.NewKeyValue(
+		db.NewWorkspaceKeyValueRepository(db.GetDB()),
 		db.NewWorkspaceRepository(db.GetDB()),
 	)
-	err := km.DeleteKV(db.Id(wid), key)
+	err := km.DeleteKeyValue(db.Id(wid), key)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
 			util.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
-		case errors.Is(err, module.ErrKVNotFound):
+		case errors.Is(err, module.ErrKeyValueNotFound):
 			util.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "kv_not_found"),
 			})
-		case errors.Is(err, module.ErrInvalidKVKey):
+		case errors.Is(err, module.ErrInvalidKeyValueKey):
 			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})

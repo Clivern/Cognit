@@ -143,10 +143,10 @@ func SetupServer(Static embed.FS) http.Handler {
 		})
 
 		r.Route("/kv", func(r chi.Router) {
-			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListKV})).Get("/", api.ListKVAction)         // list workspace keys
-			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetKV})).Get("/*", api.GetKVAction)          // get a workspace key
-			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanPutKV})).Put("/*", api.PutKVAction)          // write a workspace key
-			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanDeleteKV})).Delete("/*", api.DeleteKVAction) // delete a workspace key
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListKeyValue})).Get("/", api.ListKeyValueAction)         // list workspace keys
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetKeyValue})).Get("/*", api.GetKeyValueAction)          // get a workspace key
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanPutKeyValue})).Put("/*", api.PutKeyValueAction)          // write a workspace key
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanDeleteKeyValue})).Delete("/*", api.DeleteKeyValueAction) // delete a workspace key
 		})
 
 		r.Route("/traffic", func(r chi.Router) {

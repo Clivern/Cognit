@@ -16,29 +16,29 @@ import (
 )
 
 var (
-	ErrKVNotFound     = errors.New("kv not found")
-	ErrInvalidKVKey   = errors.New("invalid kv key")
-	ErrFailedListKV   = errors.New("failed list kv")
-	ErrFailedGetKV    = errors.New("failed get kv")
-	ErrFailedPutKV    = errors.New("failed put kv")
-	ErrFailedDeleteKV = errors.New("failed delete kv")
-	kvKeyPattern      = regexp.MustCompile(`^[A-Za-z0-9_./-]{1,200}$`)
+	ErrKeyValueNotFound     = errors.New("kv not found")
+	ErrInvalidKeyValueKey   = errors.New("invalid kv key")
+	ErrFailedListKeyValue   = errors.New("failed list kv")
+	ErrFailedGetKeyValue    = errors.New("failed get kv")
+	ErrFailedPutKeyValue    = errors.New("failed put kv")
+	ErrFailedDeleteKeyValue = errors.New("failed delete kv")
+	keyValueKeyPattern      = regexp.MustCompile(`^[A-Za-z0-9_./-]{1,200}$`)
 )
 
-// KV is the module for workspace key/value config.
-type KV struct {
-	KVRepository        db.WorkspaceKVRepository
+// KeyValue is the module for workspace key/value config.
+type KeyValue struct {
+	KeyValueRepository  db.WorkspaceKeyValueRepository
 	WorkspaceRepository db.WorkspaceRepository
 }
 
-// PutKVRequest is the body for writing a workspace key.
-type PutKVRequest struct {
+// PutKeyValueRequest is the body for writing a workspace key.
+type PutKeyValueRequest struct {
 	Value     string `json:"value" validate:"required" label:"Value"`
 	ExpiresAt string `json:"expiresAt" validate:"omitempty,max=64" label:"Expires at"`
 }
 
-// KVResponse is a workspace key shaped for API responses.
-type KVResponse struct {
+// KeyValueResponse is a workspace key shaped for API responses.
+type KeyValueResponse struct {
 	Id          db.Id   `json:"id"`
 	WorkspaceId db.Id   `json:"workspaceId"`
 	Key         string  `json:"key"`
@@ -48,24 +48,24 @@ type KVResponse struct {
 	UpdatedAt   string  `json:"updatedAt"`
 }
 
-// ListKVResponse is returned when listing workspace keys.
-type ListKVResponse struct {
-	Items []*KVResponse
+// ListKeyValueResponse is returned when listing workspace keys.
+type ListKeyValueResponse struct {
+	Items []*KeyValueResponse
 	Total int64
 }
 
-// NewKV creates a workspace KV module with the given repositories.
-func NewKV(items db.WorkspaceKVRepository, workspaces db.WorkspaceRepository) *KV {
-	return &KV{
-		KVRepository:        items,
+// NewKeyValue creates a workspace KeyValue module with the given repositories.
+func NewKeyValue(items db.WorkspaceKeyValueRepository, workspaces db.WorkspaceRepository) *KeyValue {
+	return &KeyValue{
+		KeyValueRepository:  items,
 		WorkspaceRepository: workspaces,
 	}
 }
 
-// ListKV returns non-expired keys that start with prefix.
-func (k *KV) ListKV(workspaceId db.Id, prefix string) (*ListKVResponse, error) {
+// ListKeyValue returns non-expired keys that start with prefix.
+func (k *KeyValue) ListKeyValue(workspaceId db.Id, prefix string) (*ListKeyValueResponse, error) {
 	prefixKey := strings.TrimSuffix(prefix, "/")
-	valid := prefix == "" || kvKeyPattern.MatchString(prefixKey)
+	valid := prefix == "" || keyValueKeyPattern.MatchString(prefixKey)
 	if valid && prefix != "" {
 		for _, part := range strings.Split(prefixKey, "/") {
 			if part == "" || part == "." || part == ".." {
@@ -75,7 +75,7 @@ func (k *KV) ListKV(workspaceId db.Id, prefix string) (*ListKVResponse, error) {
 		}
 	}
 	if !valid {
-		return nil, ErrInvalidKVKey
+		return nil, ErrInvalidKeyValueKey
 	}
 
 	workspace, err := k.WorkspaceRepository.GetById(workspaceId)
@@ -86,18 +86,18 @@ func (k *KV) ListKV(workspaceId db.Id, prefix string) (*ListKVResponse, error) {
 		return nil, ErrWorkspaceNotFound
 	}
 
-	items, err := k.KVRepository.ListByPrefix(workspaceId, strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(prefix))
+	items, err := k.KeyValueRepository.ListByPrefix(workspaceId, strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(prefix))
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrFailedListKV, err)
+		return nil, fmt.Errorf("%w: %v", ErrFailedListKeyValue, err)
 	}
 
-	list := make([]*KVResponse, 0, len(items))
+	list := make([]*KeyValueResponse, 0, len(items))
 	for _, item := range items {
 		var expiresAt *string
 		if item.ExpiresAt != nil {
 			expiresAt = new(item.ExpiresAt.UTC().Format(time.RFC3339))
 		}
-		list = append(list, &KVResponse{
+		list = append(list, &KeyValueResponse{
 			Id:          item.Id,
 			WorkspaceId: item.WorkspaceId,
 			Key:         item.Key,
@@ -108,12 +108,12 @@ func (k *KV) ListKV(workspaceId db.Id, prefix string) (*ListKVResponse, error) {
 		})
 	}
 
-	return &ListKVResponse{Items: list, Total: int64(len(list))}, nil
+	return &ListKeyValueResponse{Items: list, Total: int64(len(list))}, nil
 }
 
-// GetKV returns one non-expired key.
-func (k *KV) GetKV(workspaceId db.Id, key string) (*KVResponse, error) {
-	valid := kvKeyPattern.MatchString(key)
+// GetKeyValue returns one non-expired key.
+func (k *KeyValue) GetKeyValue(workspaceId db.Id, key string) (*KeyValueResponse, error) {
+	valid := keyValueKeyPattern.MatchString(key)
 	if valid {
 		for _, part := range strings.Split(key, "/") {
 			if part == "" || part == "." || part == ".." {
@@ -123,7 +123,7 @@ func (k *KV) GetKV(workspaceId db.Id, key string) (*KVResponse, error) {
 		}
 	}
 	if !valid {
-		return nil, ErrInvalidKVKey
+		return nil, ErrInvalidKeyValueKey
 	}
 
 	workspace, err := k.WorkspaceRepository.GetById(workspaceId)
@@ -134,12 +134,12 @@ func (k *KV) GetKV(workspaceId db.Id, key string) (*KVResponse, error) {
 		return nil, ErrWorkspaceNotFound
 	}
 
-	item, err := k.KVRepository.Get(workspaceId, key)
+	item, err := k.KeyValueRepository.Get(workspaceId, key)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrFailedGetKV, err)
+		return nil, fmt.Errorf("%w: %v", ErrFailedGetKeyValue, err)
 	}
 	if item == nil {
-		return nil, ErrKVNotFound
+		return nil, ErrKeyValueNotFound
 	}
 
 	var expiresAt *string
@@ -147,7 +147,7 @@ func (k *KV) GetKV(workspaceId db.Id, key string) (*KVResponse, error) {
 		expiresAt = new(item.ExpiresAt.UTC().Format(time.RFC3339))
 	}
 
-	return &KVResponse{
+	return &KeyValueResponse{
 		Id:          item.Id,
 		WorkspaceId: item.WorkspaceId,
 		Key:         item.Key,
@@ -158,9 +158,9 @@ func (k *KV) GetKV(workspaceId db.Id, key string) (*KVResponse, error) {
 	}, nil
 }
 
-// PutKV writes a workspace key.
-func (k *KV) PutKV(workspaceId db.Id, key string, req *PutKVRequest) (*KVResponse, error) {
-	valid := kvKeyPattern.MatchString(key)
+// PutKeyValue writes a workspace key.
+func (k *KeyValue) PutKeyValue(workspaceId db.Id, key string, req *PutKeyValueRequest) (*KeyValueResponse, error) {
+	valid := keyValueKeyPattern.MatchString(key)
 	if valid {
 		for _, part := range strings.Split(key, "/") {
 			if part == "" || part == "." || part == ".." {
@@ -170,7 +170,7 @@ func (k *KV) PutKV(workspaceId db.Id, key string, req *PutKVRequest) (*KVRespons
 		}
 	}
 	if !valid {
-		return nil, ErrInvalidKVKey
+		return nil, ErrInvalidKeyValueKey
 	}
 
 	workspace, err := k.WorkspaceRepository.GetById(workspaceId)
@@ -190,16 +190,16 @@ func (k *KV) PutKV(workspaceId db.Id, key string, req *PutKVRequest) (*KVRespons
 		expiresAt = new(t)
 	}
 
-	item := &db.WorkspaceKV{
+	item := &db.WorkspaceKeyValue{
 		WorkspaceId: workspaceId,
 		Key:         key,
 		Value:       req.Value,
 		ExpiresAt:   expiresAt,
 	}
-	err = k.KVRepository.Upsert(item)
+	err = k.KeyValueRepository.Upsert(item)
 
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrFailedPutKV, err)
+		return nil, fmt.Errorf("%w: %v", ErrFailedPutKeyValue, err)
 	}
 
 	var expiresAtText *string
@@ -207,7 +207,7 @@ func (k *KV) PutKV(workspaceId db.Id, key string, req *PutKVRequest) (*KVRespons
 		expiresAtText = new(item.ExpiresAt.UTC().Format(time.RFC3339))
 	}
 
-	return &KVResponse{
+	return &KeyValueResponse{
 		Id:          item.Id,
 		WorkspaceId: item.WorkspaceId,
 		Key:         item.Key,
@@ -218,9 +218,9 @@ func (k *KV) PutKV(workspaceId db.Id, key string, req *PutKVRequest) (*KVRespons
 	}, nil
 }
 
-// DeleteKV removes a workspace key.
-func (k *KV) DeleteKV(workspaceId db.Id, key string) error {
-	valid := kvKeyPattern.MatchString(key)
+// DeleteKeyValue removes a workspace key.
+func (k *KeyValue) DeleteKeyValue(workspaceId db.Id, key string) error {
+	valid := keyValueKeyPattern.MatchString(key)
 	if valid {
 		for _, part := range strings.Split(key, "/") {
 			if part == "" || part == "." || part == ".." {
@@ -230,7 +230,7 @@ func (k *KV) DeleteKV(workspaceId db.Id, key string) error {
 		}
 	}
 	if !valid {
-		return ErrInvalidKVKey
+		return ErrInvalidKeyValueKey
 	}
 
 	workspace, err := k.WorkspaceRepository.GetById(workspaceId)
@@ -241,17 +241,17 @@ func (k *KV) DeleteKV(workspaceId db.Id, key string) error {
 		return ErrWorkspaceNotFound
 	}
 
-	item, err := k.KVRepository.Get(workspaceId, key)
+	item, err := k.KeyValueRepository.Get(workspaceId, key)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrFailedDeleteKV, err)
+		return fmt.Errorf("%w: %v", ErrFailedDeleteKeyValue, err)
 	}
 	if item == nil {
-		return ErrKVNotFound
+		return ErrKeyValueNotFound
 	}
 
-	err = k.KVRepository.Delete(workspaceId, key)
+	err = k.KeyValueRepository.Delete(workspaceId, key)
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrFailedDeleteKV, err)
+		return fmt.Errorf("%w: %v", ErrFailedDeleteKeyValue, err)
 	}
 
 	return nil

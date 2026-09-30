@@ -51,10 +51,10 @@ const (
 	CanDeleteIntention = "CAN_DELETE_INTENTION"
 	CanCheckIntention  = "CAN_CHECK_INTENTION"
 
-	CanListKV   = "CAN_LIST_KV"
-	CanGetKV    = "CAN_GET_KV"
-	CanPutKV    = "CAN_PUT_KV"
-	CanDeleteKV = "CAN_DELETE_KV"
+	CanListKeyValue   = "CAN_LIST_KEY_VALUE"
+	CanGetKeyValue    = "CAN_GET_KEY_VALUE"
+	CanPutKeyValue    = "CAN_PUT_KEY_VALUE"
+	CanDeleteKeyValue = "CAN_DELETE_KEY_VALUE"
 
 	CanListTraffic = "CAN_LIST_TRAFFIC"
 	CanGetTraffic  = "CAN_GET_TRAFFIC"
@@ -143,8 +143,8 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 		CanListIntentions,
 		CanGetIntention,
 		CanCheckIntention,
-		CanListKV,
-		CanGetKV,
+		CanListKeyValue,
+		CanGetKeyValue,
 		CanListTraffic,
 		CanGetTraffic:
 		return true, nil
@@ -169,8 +169,8 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 		CanCreateIntention,
 		CanUpdateIntention,
 		CanDeleteIntention,
-		CanPutKV,
-		CanDeleteKV:
+		CanPutKeyValue,
+		CanDeleteKeyValue:
 		return membership.Role == db.UserRoleAdmin || membership.Role == db.UserRoleOwner, nil
 	default:
 		return false, nil
