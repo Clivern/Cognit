@@ -392,3 +392,48 @@ msgstr "Workspace subscription not found."
 
 msgid "workspace_member_not_found"
 msgstr "Workspace member not found."
+
+msgid "agent_not_found"
+msgstr "Agent not found."
+
+msgid "invalid_agent_name"
+msgstr "Invalid agent name."
+
+msgid "invalid_agent_card"
+msgstr "Invalid agent card."
+
+msgid "invalid_agent_version"
+msgstr "Invalid agent version."
+
+msgid "failed_agent_request"
+msgstr "Failed to complete the agent request."
+
+msgid "intention_not_found"
+msgstr "Intention not found."
+
+msgid "invalid_intention_id"
+msgstr "Invalid intention ID."
+
+msgid "invalid_intention_action"
+msgstr "Invalid intention action."
+
+msgid "failed_intention_request"
+msgstr "Failed to complete the intention request."
+
+msgid "kv_not_found"
+msgstr "Key not found."
+
+msgid "invalid_kv_key"
+msgstr "Invalid key."
+
+msgid "failed_kv_request"
+msgstr "Failed to complete the key request."
+
+msgid "traffic_not_found"
+msgstr "Gateway call not found."
+
+msgid "invalid_traffic_id"
+msgstr "Invalid gateway call ID."
+
+msgid "failed_traffic_request"
+msgstr "Failed to complete the traffic request."

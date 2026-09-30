@@ -380,3 +380,48 @@ msgstr "Abonnement de l'espace de travail introuvable."
 
 msgid "workspace_member_not_found"
 msgstr "Membre de l'espace de travail introuvable."
+
+msgid "agent_not_found"
+msgstr "Agent introuvable."
+
+msgid "invalid_agent_name"
+msgstr "Nom d'agent invalide."
+
+msgid "invalid_agent_card"
+msgstr "Carte d'agent invalide."
+
+msgid "invalid_agent_version"
+msgstr "Version d'agent invalide."
+
+msgid "failed_agent_request"
+msgstr "Impossible de traiter la requête agent."
+
+msgid "intention_not_found"
+msgstr "Intention introuvable."
+
+msgid "invalid_intention_id"
+msgstr "Identifiant d'intention invalide."
+
+msgid "invalid_intention_action"
+msgstr "Action d'intention invalide."
+
+msgid "failed_intention_request"
+msgstr "Impossible de traiter la requête d'intention."
+
+msgid "kv_not_found"
+msgstr "Clé introuvable."
+
+msgid "invalid_kv_key"
+msgstr "Clé invalide."
+
+msgid "failed_kv_request"
+msgstr "Impossible de traiter la requête de clé."
+
+msgid "traffic_not_found"
+msgstr "Appel de passerelle introuvable."
+
+msgid "invalid_traffic_id"
+msgstr "Identifiant d'appel invalide."
+
+msgid "failed_traffic_request"
+msgstr "Impossible de traiter la requête de trafic."
