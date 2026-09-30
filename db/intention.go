@@ -32,6 +32,7 @@ type IntentionRepository interface {
 	Update(intention *Intention) error
 	Delete(id Id) error
 	ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*Intention, error)
+	CountByWorkspaceId(workspaceId Id) (int64, error)
 	Match(workspaceId Id, source, destination, skill string) (*Intention, error)
 }
 
@@ -155,6 +156,16 @@ func (r *IntentionRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, o
 		list = append(list, intention)
 	}
 	return list, rows.Err()
+}
+
+// CountByWorkspaceId returns the number of intentions in a workspace.
+func (r *IntentionRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64, error) {
+	var count int64
+	err := r.db.QueryRow(
+		`SELECT COUNT(*) FROM intentions WHERE workspace_id = $1`,
+		workspaceId.String(),
+	).Scan(&count)
+	return count, err
 }
 
 // Match returns the intention the gateway should apply.
