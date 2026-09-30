@@ -553,10 +553,7 @@
     "workspace_handle": "Identifiant",
     "workspace_role": "Votre rôle",
     "workspace_tokens": "Jetons IA",
-    "workspace_members": "Membres",
-    "book_call_title": "Besoin d'aide ?",
-    "book_call_desc": "Réservez un appel avec notre équipe pour l'onboarding, des conseils d'architecture ou le dépannage de votre configuration mémoire.",
-    "book_call_cta": "Réserver un appel"
+    "workspace_members": "Membres"
   },
   "workspace_settings_page": {
     "title": "Paramètres",

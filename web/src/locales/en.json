@@ -553,10 +553,7 @@
     "workspace_handle": "Handle",
     "workspace_role": "Your role",
     "workspace_tokens": "AI tokens",
-    "workspace_members": "Members",
-    "book_call_title": "Need help?",
-    "book_call_desc": "Book a call with our team for onboarding, architecture advice, or troubleshooting your agent memory setup.",
-    "book_call_cta": "Book a call"
+    "workspace_members": "Members"
   },
   "workspace_settings_page": {
     "title": "Settings",

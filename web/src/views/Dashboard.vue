@@ -141,37 +141,6 @@
         </div>
 
         <div class="space-y-6">
-          <div class="section h-fit overflow-hidden">
-            <div class="mx-auto mb-4 flex h-20 w-full items-center justify-center" aria-hidden="true">
-              <svg class="h-20 w-auto" viewBox="0 0 120 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="8" y="16" width="72" height="64" rx="10" fill="#F5F0EB" stroke="#D4C4B0" stroke-width="1.5"/>
-                <rect x="8" y="16" width="72" height="18" rx="10" fill="#37352F"/>
-                <circle cx="24" cy="25" r="3" fill="#E8DDD0"/>
-                <circle cx="36" cy="25" r="3" fill="#E8DDD0"/>
-                <rect x="20" y="44" width="20" height="16" rx="4" fill="#FFFFFF" stroke="#D4C4B0" stroke-width="1.2"/>
-                <rect x="48" y="44" width="20" height="16" rx="4" fill="#FFFFFF" stroke="#D4C4B0" stroke-width="1.2"/>
-                <rect x="20" y="66" width="20" height="8" rx="3" fill="#E8DDD0"/>
-                <rect x="48" y="66" width="20" height="8" rx="3" fill="#37352F" opacity="0.85"/>
-                <path d="M88 34c8 0 14 6 14 14v10c0 8-6 14-14 14h-2l-6 8v-8h-6c-8 0-14-6-14-14V48c0-8 6-14 14-14h14z" fill="#FFFFFF" stroke="#37352F" stroke-width="1.5"/>
-                <circle cx="82" cy="52" r="2" fill="#37352F"/>
-                <circle cx="92" cy="52" r="2" fill="#37352F"/>
-                <circle cx="102" cy="52" r="2" fill="#37352F"/>
-              </svg>
-            </div>
-            <h2 class="section-title">{{ $t('dashboard.book_call_title') }}</h2>
-            <p class="text-sm text-theme-textLight leading-relaxed">
-              {{ $t('dashboard.book_call_desc') }}
-            </p>
-            <a
-              :href="calendlyUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-primary mt-4 inline-flex w-full items-center justify-center"
-            >
-              {{ $t('dashboard.book_call_cta') }}
-            </a>
-          </div>
-
           <div class="section h-fit">
             <h2 class="section-title">{{ $t('dashboard.workspace_info') }}</h2>
             <dl class="space-y-0">
@@ -218,7 +187,6 @@ import { isSaaS } from '@/lib/edition'
 
 const { t } = useI18n()
 
-const calendlyUrl = 'https://calendly.com/'
 const WHATS_NEW_KEY = 'dashboard_whats_new_v1'
 
 const { currentWorkspace, canManage } = useWorkspaceContext()
