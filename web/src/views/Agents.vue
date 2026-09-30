@@ -32,9 +32,11 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-theme-border">
-              <tr v-for="agent in agents" :key="agent.id" class="hover:bg-theme-hover">
+              <tr v-for="agent in agents" :key="agent.name" class="hover:bg-theme-hover">
                 <td class="px-6 py-4">
-                  <p class="text-sm font-medium text-theme-text font-mono">{{ agent.name }}</p>
+                  <router-link :to="`/agents/${agent.name}`" class="text-sm font-medium text-theme-text font-mono hover:underline">
+                    {{ agent.name }}
+                  </router-link>
                   <p class="mt-0.5 text-sm text-theme-textLight">{{ agent.description }}</p>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-theme-text font-mono">{{ agent.version }}</td>
@@ -75,41 +77,19 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppNav from '@/components/AppNav.vue'
+import { catalogAgents } from '@/mocks/catalog'
 
 const { t } = useI18n()
 
-const agents = computed(() => [
-  {
-    id: 'support-assistant',
-    name: 'support-assistant',
-    description: t('agents_page.mock_support_desc'),
-    version: '1.0.0',
-    skills: ['support.answer'],
-    live: 2,
-    health: 'passing',
-    updated: t('agents_page.mock_updated_2m'),
-  },
-  {
-    id: 'user-directory',
-    name: 'user-directory',
-    description: t('agents_page.mock_directory_desc'),
-    version: '1.2.0',
-    skills: ['user.profile.get'],
-    live: 1,
-    health: 'passing',
-    updated: t('agents_page.mock_updated_18m'),
-  },
-  {
-    id: 'invoice-extractor',
-    name: 'invoice-extractor',
-    description: t('agents_page.mock_invoice_desc'),
-    version: '0.9.1',
-    skills: ['invoice.extract'],
-    live: 1,
-    health: 'warning',
-    updated: t('agents_page.mock_updated_1h'),
-  },
-])
+const agents = computed(() => catalogAgents.map((agent) => ({
+  name: agent.name,
+  description: t(agent.descriptionKey),
+  version: agent.version,
+  skills: agent.skills.map((skill) => skill.id),
+  live: agent.instances.length,
+  health: agent.health,
+  updated: t(agent.updatedKey),
+})))
 
 function healthClass(health) {
   return {

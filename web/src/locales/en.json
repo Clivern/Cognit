@@ -171,6 +171,15 @@
     "mock_updated_2m": "2 minutes ago",
     "mock_updated_18m": "18 minutes ago",
     "mock_updated_1h": "1 hour ago",
+    "card": "Card",
+    "card_desc": "The registered agent card used for discovery.",
+    "instances_desc": "Leased processes currently announcing this agent.",
+    "instance": "Instance",
+    "address": "Address",
+    "datacenter": "Datacenter",
+    "input_modes": "Input",
+    "output_modes": "Output",
+    "capabilities": "Capabilities",
     "create": "Create agent",
     "create_title": "Create agent",
     "create_desc": "Define the agent name and description.",
@@ -311,6 +320,27 @@
     "failed_remove_member": "Failed to remove member",
     "failed_cancel_invite": "Failed to cancel invite"
   },
+  "intentions_page": {
+    "title": "Intentions",
+    "subtitle": "Who may call whom inside this workspace.",
+    "list_title": "Rules",
+    "list_desc": "The gateway denies a call unless an intention allows that source, destination, and skill.",
+    "source": "Source",
+    "destination": "Destination",
+    "skill": "Skill",
+    "action": "Action",
+    "action_allow": "Allow",
+    "action_deny": "Deny"
+  },
+  "kv_page": {
+    "title": "KV",
+    "subtitle": "Workspace config agents can watch and hot-reload.",
+    "list_title": "Keys",
+    "list_desc": "Model pins, prompt refs, and feature flags. Do not store secrets here.",
+    "key": "Key",
+    "value": "Value",
+    "updated": "Updated"
+  },
   "nav": {
     "menu": "Menu",
     "user_menu": "User menu",
@@ -328,6 +358,8 @@
     "logout": "Logout",
     "dashboard": "Dashboard",
     "agents": "Agents",
+    "intentions": "Intentions",
+    "kv": "KV",
     "settings": "Settings",
     "audits": "Audits",
     "billing": "Billing"

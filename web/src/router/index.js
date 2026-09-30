@@ -33,6 +33,24 @@ const routes = [
     meta: { requiresAuth: true, requiresWorkspace: true, title: 'Agents', description: 'Registered agents' }
   },
   {
+    path: '/agents/:name',
+    name: 'Agent',
+    component: () => import('@/views/Agent.vue'),
+    meta: { requiresAuth: true, requiresWorkspace: true, title: 'Agent', description: 'Agent card and instances' }
+  },
+  {
+    path: '/intentions',
+    name: 'Intentions',
+    component: () => import('@/views/Intentions.vue'),
+    meta: { requiresAuth: true, requiresWorkspace: true, title: 'Intentions', description: 'Who may call whom' }
+  },
+  {
+    path: '/kv',
+    name: 'KV',
+    component: () => import('@/views/KV.vue'),
+    meta: { requiresAuth: true, requiresWorkspace: true, title: 'KV', description: 'Workspace key-value config' }
+  },
+  {
     path: '/select-workspace',
     name: 'SwitchWorkspaces',
     component: () => import('@/views/SelectWorkspace.vue'),

@@ -154,6 +154,8 @@ const navItems = computed(() => {
   return [
     { to: '/dashboard', label: t('nav.dashboard') },
     { to: '/agents', label: t('nav.agents') },
+    { to: '/intentions', label: t('nav.intentions') },
+    { to: '/kv', label: t('nav.kv') },
     { to: '/integrations', label: 'Integrations', requiresManage: true },
     { to: '/audits', label: t('nav.audits'), requiresManage: true },
     { to: '/billing', label: t('nav.billing'), requiresManage: true, requiresSaaS: true },

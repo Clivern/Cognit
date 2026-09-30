@@ -171,6 +171,15 @@
     "mock_updated_2m": "Il y a 2 minutes",
     "mock_updated_18m": "Il y a 18 minutes",
     "mock_updated_1h": "Il y a 1 heure",
+    "card": "Carte",
+    "card_desc": "La carte d'agent enregistrée, utilisée pour la découverte.",
+    "instances_desc": "Processus sous bail qui annoncent actuellement cet agent.",
+    "instance": "Instance",
+    "address": "Adresse",
+    "datacenter": "Datacenter",
+    "input_modes": "Entrée",
+    "output_modes": "Sortie",
+    "capabilities": "Capacités",
     "create": "Créer un agent",
     "create_title": "Créer un agent",
     "create_desc": "Définissez le nom et la description de l'agent.",
@@ -311,6 +320,27 @@
     "failed_remove_member": "Échec du retrait du membre",
     "failed_cancel_invite": "Échec de l'annulation de l'invitation"
   },
+  "intentions_page": {
+    "title": "Intentions",
+    "subtitle": "Qui peut appeler qui dans cet espace.",
+    "list_title": "Règles",
+    "list_desc": "La passerelle refuse un appel sauf si une intention autorise cette source, cette destination et cette compétence.",
+    "source": "Source",
+    "destination": "Destination",
+    "skill": "Compétence",
+    "action": "Action",
+    "action_allow": "Autoriser",
+    "action_deny": "Refuser"
+  },
+  "kv_page": {
+    "title": "KV",
+    "subtitle": "Configuration de l'espace que les agents peuvent surveiller et recharger.",
+    "list_title": "Clés",
+    "list_desc": "Épingles de modèle, références de prompts et feature flags. Ne stockez pas de secrets ici.",
+    "key": "Clé",
+    "value": "Valeur",
+    "updated": "Mis à jour"
+  },
   "nav": {
     "menu": "Menu",
     "user_menu": "Menu utilisateur",
@@ -328,6 +358,8 @@
     "logout": "Déconnexion",
     "dashboard": "Tableau de bord",
     "agents": "Agents",
+    "intentions": "Intentions",
+    "kv": "KV",
     "settings": "Paramètres",
     "audits": "Audits",
     "billing": "Facturation"
