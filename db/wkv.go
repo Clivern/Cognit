@@ -32,8 +32,6 @@ type WorkspaceKVRepositoryPostgres struct {
 	db *sql.DB
 }
 
-const workspaceKVColumns = `id, workspace_id, key, value, expires_at, created_at, updated_at`
-
 // NewWorkspaceKVRepository returns the repository for workspace_kv.
 func NewWorkspaceKVRepository(db *sql.DB) WorkspaceKVRepository {
 	return &WorkspaceKVRepositoryPostgres{db: db}
@@ -70,7 +68,7 @@ func (r *WorkspaceKVRepositoryPostgres) Upsert(item *WorkspaceKV) error {
 func (r *WorkspaceKVRepositoryPostgres) Get(workspaceId Id, key string) (*WorkspaceKV, error) {
 	item := &WorkspaceKV{}
 	err := r.db.QueryRow(
-		`SELECT `+workspaceKVColumns+`
+		`SELECT id, workspace_id, key, value, expires_at, created_at, updated_at
 		FROM workspace_kv
 		WHERE workspace_id = $1 AND key = $2
 			AND (expires_at IS NULL OR expires_at > $3)`,
@@ -105,10 +103,10 @@ func (r *WorkspaceKVRepositoryPostgres) Delete(workspaceId Id, key string) error
 // ListByPrefix lists non-expired keys in a workspace that start with prefix.
 func (r *WorkspaceKVRepositoryPostgres) ListByPrefix(workspaceId Id, prefix string) ([]*WorkspaceKV, error) {
 	rows, err := r.db.Query(
-		`SELECT `+workspaceKVColumns+`
+		`SELECT id, workspace_id, key, value, expires_at, created_at, updated_at
 		FROM workspace_kv
 		WHERE workspace_id = $1
-			AND key LIKE $2
+			AND key LIKE $2 ESCAPE '\'
 			AND (expires_at IS NULL OR expires_at > $3)
 		ORDER BY key`,
 		workspaceId.String(),
