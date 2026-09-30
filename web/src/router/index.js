@@ -27,6 +27,12 @@ const routes = [
     meta: { requiresAuth: true, requiresWorkspace: true, title: 'Dashboard', description: 'Platform dashboard' }
   },
   {
+    path: '/agents',
+    name: 'Agents',
+    component: () => import('@/views/Agents.vue'),
+    meta: { requiresAuth: true, requiresWorkspace: true, title: 'Agents', description: 'Registered agents' }
+  },
+  {
     path: '/select-workspace',
     name: 'SwitchWorkspaces',
     component: () => import('@/views/SelectWorkspace.vue'),
