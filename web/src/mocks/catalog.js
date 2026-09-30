@@ -80,6 +80,61 @@ export const catalogKV = [
   { key: 'flags/streaming', value: 'true', updatedKey: 'agents_page.mock_updated_1h' },
 ]
 
+export const catalogTraffic = [
+  {
+    id: 'call-1',
+    timeKey: 'agents_page.mock_updated_2m',
+    source: 'support-assistant',
+    destination: 'user-directory',
+    skill: 'user.profile.get',
+    verb: 'message:send',
+    decision: 'allow',
+    result: 'completed',
+    instance: 'user-directory-1',
+    latency: '42ms',
+    taskId: 'task-8f2a',
+  },
+  {
+    id: 'call-2',
+    timeKey: 'agents_page.mock_updated_18m',
+    source: 'support-assistant',
+    destination: 'invoice-extractor',
+    skill: 'invoice.extract',
+    verb: 'message:send',
+    decision: 'deny',
+    result: 'denied',
+    instance: '',
+    latency: '',
+    taskId: '',
+  },
+  {
+    id: 'call-3',
+    timeKey: 'agents_page.mock_updated_1h',
+    source: 'cfo-assistant',
+    destination: 'invoice-extractor',
+    skill: 'invoice.extract',
+    verb: 'message:send',
+    decision: 'allow',
+    result: 'timeout',
+    instance: 'invoice-extractor-3',
+    latency: '820ms',
+    taskId: '',
+  },
+  {
+    id: 'call-4',
+    timeKey: 'agents_page.mock_updated_2m',
+    source: 'support-assistant',
+    destination: 'user-directory',
+    skill: 'user.profile.get',
+    verb: 'message:stream',
+    decision: 'allow',
+    result: 'completed',
+    instance: 'user-directory-1',
+    latency: '110ms',
+    taskId: 'task-91c0',
+  },
+]
+
 export function findAgent(name) {
   return catalogAgents.find((agent) => agent.name === name) || null
 }

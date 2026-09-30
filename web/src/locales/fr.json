@@ -341,6 +341,29 @@
     "value": "Valeur",
     "updated": "Mis à jour"
   },
+  "traffic_page": {
+    "title": "Trafic",
+    "subtitle": "Appels passés par la passerelle.",
+    "list_title": "Appels",
+    "list_desc": "Qui a appelé qui, si une intention l'a autorisé, et comment la requête s'est terminée. Les corps de message ne sont pas stockés ici.",
+    "when": "Quand",
+    "source": "Source",
+    "destination": "Destination",
+    "skill": "Compétence",
+    "verb": "Verbe",
+    "decision": "Décision",
+    "decision_allow": "Autoriser",
+    "decision_deny": "Refuser",
+    "result": "Résultat",
+    "result_completed": "Terminé",
+    "result_failed": "Échec",
+    "result_denied": "Refusé",
+    "result_timeout": "Délai dépassé",
+    "result_no_instance": "Aucune instance",
+    "instance": "Instance",
+    "latency": "Latence",
+    "task": "Tâche"
+  },
   "nav": {
     "menu": "Menu",
     "user_menu": "Menu utilisateur",
@@ -360,6 +383,7 @@
     "agents": "Agents",
     "intentions": "Intentions",
     "kv": "KV",
+    "traffic": "Trafic",
     "settings": "Paramètres",
     "audits": "Audits",
     "billing": "Facturation"

@@ -51,6 +51,12 @@ const routes = [
     meta: { requiresAuth: true, requiresWorkspace: true, title: 'KV', description: 'Workspace key-value config' }
   },
   {
+    path: '/traffic',
+    name: 'Traffic',
+    component: () => import('@/views/Traffic.vue'),
+    meta: { requiresAuth: true, requiresWorkspace: true, title: 'Traffic', description: 'Gateway calls' }
+  },
+  {
     path: '/select-workspace',
     name: 'SwitchWorkspaces',
     component: () => import('@/views/SelectWorkspace.vue'),

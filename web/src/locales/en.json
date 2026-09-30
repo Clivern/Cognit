@@ -341,6 +341,29 @@
     "value": "Value",
     "updated": "Updated"
   },
+  "traffic_page": {
+    "title": "Traffic",
+    "subtitle": "Calls that passed through the gateway.",
+    "list_title": "Calls",
+    "list_desc": "Who called whom, whether an intention allowed it, and how the request finished. Message bodies are not stored here.",
+    "when": "When",
+    "source": "Source",
+    "destination": "Destination",
+    "skill": "Skill",
+    "verb": "Verb",
+    "decision": "Decision",
+    "decision_allow": "Allow",
+    "decision_deny": "Deny",
+    "result": "Result",
+    "result_completed": "Completed",
+    "result_failed": "Failed",
+    "result_denied": "Denied",
+    "result_timeout": "Timed out",
+    "result_no_instance": "No instance",
+    "instance": "Instance",
+    "latency": "Latency",
+    "task": "Task"
+  },
   "nav": {
     "menu": "Menu",
     "user_menu": "User menu",
@@ -360,6 +383,7 @@
     "agents": "Agents",
     "intentions": "Intentions",
     "kv": "KV",
+    "traffic": "Traffic",
     "settings": "Settings",
     "audits": "Audits",
     "billing": "Billing"
