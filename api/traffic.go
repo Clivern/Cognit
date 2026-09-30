@@ -29,7 +29,10 @@ func ListTrafficAction(w http.ResponseWriter, r *http.Request) {
 
 	limit, offset := util.ParsePagination(r)
 
-	tm := module.NewTraffic(db.NewWorkspaceRepository(db.GetDB()))
+	tm := module.NewTraffic(
+		db.NewTrafficRepository(db.GetDB()),
+		db.NewWorkspaceRepository(db.GetDB()),
+	)
 	result, err := tm.ListTraffic(db.Id(wid), limit, offset)
 	if err != nil {
 		switch {
@@ -74,7 +77,10 @@ func GetTrafficAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tm := module.NewTraffic(db.NewWorkspaceRepository(db.GetDB()))
+	tm := module.NewTraffic(
+		db.NewTrafficRepository(db.GetDB()),
+		db.NewWorkspaceRepository(db.GetDB()),
+	)
 	call, err := tm.GetTraffic(db.Id(wid), db.Id(trafficId))
 	if err != nil {
 		switch {

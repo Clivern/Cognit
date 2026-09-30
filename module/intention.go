@@ -28,14 +28,6 @@ type Intention struct {
 	WorkspaceRepository db.WorkspaceRepository
 }
 
-// NewIntention creates an intention module with the given repositories.
-func NewIntention(intentions db.IntentionRepository, workspaces db.WorkspaceRepository) *Intention {
-	return &Intention{
-		IntentionRepository: intentions,
-		WorkspaceRepository: workspaces,
-	}
-}
-
 // IntentionSource names the calling agent.
 type IntentionSource struct {
 	Agent string `json:"agent" validate:"required,max=100" label:"Source agent"`
@@ -82,6 +74,14 @@ type ListIntentionsResponse struct {
 type CheckIntentionResponse struct {
 	Action    string             `json:"action"`
 	Intention *IntentionResponse `json:"intention,omitempty"`
+}
+
+// NewIntention creates an intention module with the given repositories.
+func NewIntention(intentions db.IntentionRepository, workspaces db.WorkspaceRepository) *Intention {
+	return &Intention{
+		IntentionRepository: intentions,
+		WorkspaceRepository: workspaces,
+	}
 }
 
 // ListIntentions returns paginated intentions in a workspace.

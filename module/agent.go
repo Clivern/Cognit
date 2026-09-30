@@ -37,15 +37,6 @@ type Agent struct {
 	WorkspaceRepository db.WorkspaceRepository
 }
 
-// NewAgent creates an agent module with the given repositories.
-func NewAgent(agents db.AgentRepository, instances db.AgentInstanceRepository, workspaces db.WorkspaceRepository) *Agent {
-	return &Agent{
-		AgentRepository:     agents,
-		InstanceRepository:  instances,
-		WorkspaceRepository: workspaces,
-	}
-}
-
 // UpsertAgentRequest is the body for registering or replacing an agent card.
 type UpsertAgentRequest struct {
 	Card    json.RawMessage `json:"card" label:"Card"`
@@ -83,6 +74,15 @@ type AgentResponse struct {
 type ListAgentsResponse struct {
 	Agents []*AgentResponse
 	Total  int64
+}
+
+// NewAgent creates an agent module with the given repositories.
+func NewAgent(agents db.AgentRepository, instances db.AgentInstanceRepository, workspaces db.WorkspaceRepository) *Agent {
+	return &Agent{
+		AgentRepository:     agents,
+		InstanceRepository:  instances,
+		WorkspaceRepository: workspaces,
+	}
 }
 
 // ListAgents returns paginated agents in a workspace.

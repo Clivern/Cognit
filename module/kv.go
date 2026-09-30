@@ -22,22 +22,13 @@ var (
 	ErrFailedGetKV    = errors.New("failed get kv")
 	ErrFailedPutKV    = errors.New("failed put kv")
 	ErrFailedDeleteKV = errors.New("failed delete kv")
+	kvKeyPattern      = regexp.MustCompile(`^[A-Za-z0-9_./-]{1,200}$`)
 )
-
-var kvKeyPattern = regexp.MustCompile(`^[A-Za-z0-9_./-]{1,200}$`)
 
 // KV is the module for workspace key/value config.
 type KV struct {
 	KVRepository        db.WorkspaceKVRepository
 	WorkspaceRepository db.WorkspaceRepository
-}
-
-// NewKV creates a workspace KV module with the given repositories.
-func NewKV(items db.WorkspaceKVRepository, workspaces db.WorkspaceRepository) *KV {
-	return &KV{
-		KVRepository:        items,
-		WorkspaceRepository: workspaces,
-	}
 }
 
 // PutKVRequest is the body for writing a workspace key.
@@ -61,6 +52,14 @@ type KVResponse struct {
 type ListKVResponse struct {
 	Items []*KVResponse
 	Total int64
+}
+
+// NewKV creates a workspace KV module with the given repositories.
+func NewKV(items db.WorkspaceKVRepository, workspaces db.WorkspaceRepository) *KV {
+	return &KV{
+		KVRepository:        items,
+		WorkspaceRepository: workspaces,
+	}
 }
 
 // ListKV returns non-expired keys that start with prefix.
@@ -108,6 +107,7 @@ func (k *KV) ListKV(workspaceId db.Id, prefix string) (*ListKVResponse, error) {
 			UpdatedAt:   item.UpdatedAt.UTC().Format(time.RFC3339),
 		})
 	}
+
 	return &ListKVResponse{Items: list, Total: int64(len(list))}, nil
 }
 
@@ -146,6 +146,7 @@ func (k *KV) GetKV(workspaceId db.Id, key string) (*KVResponse, error) {
 	if item.ExpiresAt != nil {
 		expiresAt = new(item.ExpiresAt.UTC().Format(time.RFC3339))
 	}
+
 	return &KVResponse{
 		Id:          item.Id,
 		WorkspaceId: item.WorkspaceId,
@@ -196,6 +197,7 @@ func (k *KV) PutKV(workspaceId db.Id, key string, req *PutKVRequest) (*KVRespons
 		ExpiresAt:   expiresAt,
 	}
 	err = k.KVRepository.Upsert(item)
+
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrFailedPutKV, err)
 	}
@@ -204,6 +206,7 @@ func (k *KV) PutKV(workspaceId db.Id, key string, req *PutKVRequest) (*KVRespons
 	if item.ExpiresAt != nil {
 		expiresAtText = new(item.ExpiresAt.UTC().Format(time.RFC3339))
 	}
+
 	return &KVResponse{
 		Id:          item.Id,
 		WorkspaceId: item.WorkspaceId,
@@ -250,5 +253,6 @@ func (k *KV) DeleteKV(workspaceId db.Id, key string) error {
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrFailedDeleteKV, err)
 	}
+
 	return nil
 }
