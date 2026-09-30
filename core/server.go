@@ -126,6 +126,34 @@ func SetupServer(Static embed.FS) http.Handler {
 			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetWorkspaceAudit})).Get("/{auditId}", api.GetWorkspaceAuditAction) // get audit event
 		})
 
+		r.Route("/agents", func(r chi.Router) {
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListAgents})).Get("/", api.ListAgentsAction)                 // list agents
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanUpsertAgent})).Put("/{agentName}", api.UpsertAgentAction)    // register or replace an agent card
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetAgent})).Get("/{agentName}", api.GetAgentAction)          // get an agent
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanDeleteAgent})).Delete("/{agentName}", api.DeleteAgentAction) // delete an agent
+		})
+
+		r.Route("/intentions", func(r chi.Router) {
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListIntentions})).Get("/", api.ListIntentionsAction)                   // list intentions
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanCreateIntention})).Put("/", api.CreateIntentionAction)                 // create an intention
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanCheckIntention})).Post("/check", api.CheckIntentionAction)             // check whether a call is allowed
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetIntention})).Get("/{intentionId}", api.GetIntentionAction)          // get an intention
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanUpdateIntention})).Put("/{intentionId}", api.UpdateIntentionAction)    // update an intention
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanDeleteIntention})).Delete("/{intentionId}", api.DeleteIntentionAction) // delete an intention
+		})
+
+		r.Route("/kv", func(r chi.Router) {
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListKV})).Get("/", api.ListKVAction)         // list workspace keys
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetKV})).Get("/*", api.GetKVAction)          // get a workspace key
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanPutKV})).Put("/*", api.PutKVAction)          // write a workspace key
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanDeleteKV})).Delete("/*", api.DeleteKVAction) // delete a workspace key
+		})
+
+		r.Route("/traffic", func(r chi.Router) {
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListTraffic})).Get("/", api.ListTrafficAction)          // list gateway calls
+			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetTraffic})).Get("/{trafficId}", api.GetTrafficAction) // get a gateway call
+		})
+
 	})
 
 	r.With(middleware.BasicAuth(viper.GetString("app.metrics.username"), viper.GetString("app.metrics.secret"))).Get("/api/v1/public/_metrics", promhttp.Handler().ServeHTTP) // Prometheus metrics
