@@ -1,7 +1,7 @@
 ---
 description: Keep Go types at the top of each file
 globs: "**/*.go"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Go file layout
