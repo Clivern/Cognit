@@ -12,27 +12,16 @@ import (
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/module"
 	"github.com/clivern/cognit/pkg/github"
-	"github.com/clivern/cognit/pkg/google"
-	"github.com/clivern/cognit/pkg/resend"
 	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
-	"github.com/spf13/viper"
 )
 
 const OauthStateCookie = "_cognit_oauth_state"
 
 // GitHubOAuthStartAction redirects the browser to GitHub's authorize URL.
-func GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
-	oauth := github.NewOAuth(github.OAuthConfig{
-		ClientID:     viper.GetString("app.oauth.github.client_id"),
-		ClientSecret: viper.GetString("app.oauth.github.client_secret"),
-		RedirectURL:  viper.GetString("app.oauth.github.redirect_url"),
-		Scopes:       []string{"read:user", "user:email"},
-		AllowSignup:  true,
-	})
-
+func (a *API) GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 	state, err := util.GenerateSecureToken(24)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate oauth state")
@@ -40,7 +29,7 @@ func GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authorizeURL := oauth.AuthorizeURL(state)
+	authorizeURL := a.GitHubOAuth.AuthorizeURL(state)
 
 	opts := lo.Ternary(
 		strings.HasPrefix(util.AppURL(""), "https://"),
@@ -55,49 +44,35 @@ func GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GitHubOAuthCallbackAction completes GitHub OAuth and creates a session.
-func GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 	expectedState := util.GetCookie(r, OauthStateCookie)
 
 	util.DeleteCookie(w, OauthStateCookie)
 
-	oauth := github.NewOAuth(github.OAuthConfig{
-		ClientID:     viper.GetString("app.oauth.github.client_id"),
-		ClientSecret: viper.GetString("app.oauth.github.client_secret"),
-		RedirectURL:  viper.GetString("app.oauth.github.redirect_url"),
-		Scopes:       []string{"read:user", "user:email"},
-		AllowSignup:  true,
-	})
-
-	token, err := oauth.Exchange(r.Context(), code, state, expectedState)
+	token, err := a.GitHubOAuth.Exchange(r.Context(), code, state, expectedState)
 	if err != nil {
 		log.Error().Err(err).Msg("GitHub oauth exchange failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
-	user, err := oauth.User(r.Context(), token.AccessToken)
+	user, err := a.GitHubOAuth.User(r.Context(), token.AccessToken)
 	if err != nil {
 		log.Error().Err(err).Msg("GitHub oauth user fetch failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
-	emails, err := oauth.Emails(r.Context(), token.AccessToken)
+	emails, err := a.GitHubOAuth.Emails(r.Context(), token.AccessToken)
 	if err != nil {
 		log.Error().Err(err).Msg("GitHub oauth emails fetch failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
-	auth := module.NewAuth(
-		db.NewUserRepository(db.GetDB()),
-		db.NewSessionRepository(db.GetDB()),
-		db.NewConfigRepository(db.GetDB()),
-	)
-
-	result, err := auth.LoginWithOAuth(r.Context(), &module.OAuthIdentity{
+	result, err := a.Auth.LoginWithOAuth(r.Context(), &module.OAuthIdentity{
 		Provider:       db.UserProviderGithub,
 		ProviderUserID: strconv.FormatInt(user.ID, 10),
 		Email:          github.PrimaryEmail(emails, user.Email),
@@ -115,15 +90,7 @@ func GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 
 	util.SetCookie(w, "_cognit_session", result.Session.Token, result.CookieOptions)
 
-	im := module.NewInvite(
-		db.NewUserInviteRepository(db.GetDB()),
-		db.NewUserRepository(db.GetDB()),
-		db.NewConfigRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-		db.NewWorkspaceUserRepository(db.GetDB()),
-		resend.NewMailer(),
-	)
-	err = im.AttachPending(result.User)
+	err = a.Invite.AttachPending(result.User)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -135,14 +102,7 @@ func GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GoogleOAuthStartAction redirects the browser to Google's authorize URL.
-func GoogleOAuthStartAction(w http.ResponseWriter, r *http.Request) {
-	oauth := google.NewOAuth(google.OAuthConfig{
-		ClientID:     viper.GetString("app.oauth.google.client_id"),
-		ClientSecret: viper.GetString("app.oauth.google.client_secret"),
-		RedirectURL:  viper.GetString("app.oauth.google.redirect_url"),
-		Scopes:       []string{"openid", "email", "profile"},
-	})
-
+func (a *API) GoogleOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 	state, err := util.GenerateSecureToken(24)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate oauth state")
@@ -150,7 +110,7 @@ func GoogleOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authorizeURL := oauth.AuthorizeURL(state)
+	authorizeURL := a.GoogleOAuth.AuthorizeURL(state)
 
 	opts := lo.Ternary(
 		strings.HasPrefix(util.AppURL(""), "https://"),
@@ -165,41 +125,28 @@ func GoogleOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GoogleOAuthCallbackAction completes Google OAuth and creates a session.
-func GoogleOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GoogleOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 	expectedState := util.GetCookie(r, OauthStateCookie)
 
 	util.DeleteCookie(w, OauthStateCookie)
 
-	oauth := google.NewOAuth(google.OAuthConfig{
-		ClientID:     viper.GetString("app.oauth.google.client_id"),
-		ClientSecret: viper.GetString("app.oauth.google.client_secret"),
-		RedirectURL:  viper.GetString("app.oauth.google.redirect_url"),
-		Scopes:       []string{"openid", "email", "profile"},
-	})
-
-	token, err := oauth.Exchange(r.Context(), code, state, expectedState)
+	token, err := a.GoogleOAuth.Exchange(r.Context(), code, state, expectedState)
 	if err != nil {
 		log.Error().Err(err).Msg("Google oauth exchange failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
 		return
 	}
 
-	user, err := oauth.User(r.Context(), token.AccessToken)
+	user, err := a.GoogleOAuth.User(r.Context(), token.AccessToken)
 	if err != nil {
 		log.Error().Err(err).Msg("Google oauth user fetch failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
 		return
 	}
 
-	auth := module.NewAuth(
-		db.NewUserRepository(db.GetDB()),
-		db.NewSessionRepository(db.GetDB()),
-		db.NewConfigRepository(db.GetDB()),
-	)
-
-	result, err := auth.LoginWithOAuth(r.Context(), &module.OAuthIdentity{
+	result, err := a.Auth.LoginWithOAuth(r.Context(), &module.OAuthIdentity{
 		Provider:       db.UserProviderGoogle,
 		ProviderUserID: user.Sub,
 		Email:          user.Email,
@@ -217,15 +164,7 @@ func GoogleOAuthCallbackAction(w http.ResponseWriter, r *http.Request) {
 
 	util.SetCookie(w, "_cognit_session", result.Session.Token, result.CookieOptions)
 
-	im := module.NewInvite(
-		db.NewUserInviteRepository(db.GetDB()),
-		db.NewUserRepository(db.GetDB()),
-		db.NewConfigRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-		db.NewWorkspaceUserRepository(db.GetDB()),
-		resend.NewMailer(),
-	)
-	err = im.AttachPending(result.User)
+	err = a.Invite.AttachPending(result.User)
 	if err != nil {
 		log.Error().
 			Err(err).

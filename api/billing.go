@@ -23,20 +23,13 @@ import (
 )
 
 // GetBillingStatusAction returns the current workspace billing state.
-func GetBillingStatusAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetBillingStatusAction(w http.ResponseWriter, r *http.Request) {
 	workspaceId := chi.URLParam(r, "workspaceId")
 	log.Info().
 		Str("workspaceId", workspaceId).
 		Msg("Getting billing status")
 
-	bm := module.NewBilling(
-		db.NewWorkspaceRepository(db.GetDB()),
-		db.NewSubscriptionRepository(db.GetDB()),
-		db.NewTokenPurchaseRepository(db.GetDB()),
-		module.Usage{},
-	)
-
-	status, err := bm.GetBillingStatus(db.Id(workspaceId))
+	status, err := a.Billing.GetBillingStatus(db.Id(workspaceId))
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -60,22 +53,15 @@ func GetBillingStatusAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetBillingUsageAction returns workspace usage and plan limits for billing.
-func GetBillingUsageAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetBillingUsageAction(w http.ResponseWriter, r *http.Request) {
 	workspaceId := chi.URLParam(r, "workspaceId")
 	log.Info().
 		Str("workspaceId", workspaceId).
 		Msg("Getting billing usage")
 
-	bm := module.NewBilling(
-		db.NewWorkspaceRepository(db.GetDB()),
-		db.NewSubscriptionRepository(db.GetDB()),
-		db.NewTokenPurchaseRepository(db.GetDB()),
-		module.Usage{},
-	)
-
-	usage, err := bm.GetBillingUsage(db.Id(workspaceId), module.UsageSnapshotDeps{
-		WorkspaceUserRepository: db.NewWorkspaceUserRepository(db.GetDB()),
-		UsageRepository:         db.NewUsageRepository(db.GetDB()),
+	usage, err := a.Billing.GetBillingUsage(db.Id(workspaceId), module.UsageSnapshotDeps{
+		WorkspaceUserRepository: a.WorkspaceUsers,
+		UsageRepository:         a.Usage,
 	})
 	if err != nil {
 		switch {
@@ -100,7 +86,7 @@ func GetBillingUsageAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateBillingCheckoutAction creates a Stripe Checkout session for AI tokens.
-func CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request) {
 	var req module.BillingCheckoutRequest
 	err := util.DecodeAndValidate(r, &req)
 	if err != nil {
@@ -123,13 +109,7 @@ func CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request) {
 		Int64("amountCents", req.AmountCents).
 		Msg("New billing checkout request")
 
-	bm := module.NewBilling(
-		db.NewWorkspaceRepository(db.GetDB()),
-		db.NewSubscriptionRepository(db.GetDB()),
-		db.NewTokenPurchaseRepository(db.GetDB()),
-		module.Usage{},
-	)
-	session, err := bm.CreateCheckoutSession(
+	session, err := a.Billing.CreateCheckoutSession(
 		r.Context(),
 		db.Id(workspaceId),
 		user,
@@ -169,19 +149,13 @@ func CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateBillingPortalAction creates a Stripe Billing Portal session.
-func CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) {
 	workspaceId := chi.URLParam(r, "workspaceId")
 	log.Info().
 		Str("workspaceId", workspaceId).
 		Msg("New billing portal request")
 
-	bm := module.NewBilling(
-		db.NewWorkspaceRepository(db.GetDB()),
-		db.NewSubscriptionRepository(db.GetDB()),
-		db.NewTokenPurchaseRepository(db.GetDB()),
-		module.Usage{},
-	)
-	session, err := bm.CreatePortalSession(
+	session, err := a.Billing.CreatePortalSession(
 		r.Context(),
 		db.Id(workspaceId),
 		fmt.Sprintf("%s/billing", viper.GetString("app.url")),
@@ -218,7 +192,7 @@ func CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // StripeWebhookAction receives Stripe billing webhook events.
-func StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 	payload, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
 	if err != nil {
 		log.Warn().Err(err).Msg("Stripe webhook rejected: failed to read payload")
@@ -234,14 +208,7 @@ func StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 		Bool("hasSignature", lo.IsNotEmpty(signature)).
 		Msg("Stripe webhook received")
 
-	bm := module.NewBilling(
-		db.NewWorkspaceRepository(db.GetDB()),
-		db.NewSubscriptionRepository(db.GetDB()),
-		db.NewTokenPurchaseRepository(db.GetDB()),
-		module.Usage{},
-	)
-
-	err = bm.HandleWebhook(payload, signature)
+	err = a.Billing.HandleWebhook(payload, signature)
 	if err != nil {
 		switch {
 		case errors.Is(err, stripe.ErrBillingDisabled), errors.Is(err, stripe.ErrWebhookNotConfigured):

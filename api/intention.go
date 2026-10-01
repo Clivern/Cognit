@@ -18,7 +18,7 @@ import (
 )
 
 // ListIntentionsAction lists intentions in a workspace.
-func ListIntentionsAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) ListIntentionsAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -29,11 +29,7 @@ func ListIntentionsAction(w http.ResponseWriter, r *http.Request) {
 
 	limit, offset := util.ParsePagination(r)
 
-	im := module.NewIntention(
-		db.NewIntentionRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	result, err := im.ListIntentions(db.Id(wid), limit, offset)
+	result, err := a.Intention.ListIntentions(db.Id(wid), limit, offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -60,7 +56,7 @@ func ListIntentionsAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetIntentionAction returns one intention by id.
-func GetIntentionAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -77,11 +73,7 @@ func GetIntentionAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	im := module.NewIntention(
-		db.NewIntentionRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	intention, err := im.GetIntention(db.Id(wid), db.Id(intentionId))
+	intention, err := a.Intention.GetIntention(db.Id(wid), db.Id(intentionId))
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -105,7 +97,7 @@ func GetIntentionAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateIntentionAction inserts an allow or deny rule.
-func CreateIntentionAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) CreateIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -128,11 +120,7 @@ func CreateIntentionAction(w http.ResponseWriter, r *http.Request) {
 		Str("action", req.Action).
 		Msg("Creating intention")
 
-	im := module.NewIntention(
-		db.NewIntentionRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	intention, err := im.CreateIntention(db.Id(wid), &req)
+	intention, err := a.Intention.CreateIntention(db.Id(wid), &req)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -156,7 +144,7 @@ func CreateIntentionAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateIntentionAction replaces an intention.
-func UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -186,11 +174,7 @@ func UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
 		Str("action", req.Action).
 		Msg("Updating intention")
 
-	im := module.NewIntention(
-		db.NewIntentionRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	intention, err := im.UpdateIntention(db.Id(wid), db.Id(intentionId), &req)
+	intention, err := a.Intention.UpdateIntention(db.Id(wid), db.Id(intentionId), &req)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -218,7 +202,7 @@ func UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteIntentionAction removes an intention.
-func DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -240,11 +224,7 @@ func DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 		Str("intentionId", intentionId).
 		Msg("Deleting intention")
 
-	im := module.NewIntention(
-		db.NewIntentionRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	err := im.DeleteIntention(db.Id(wid), db.Id(intentionId))
+	err := a.Intention.DeleteIntention(db.Id(wid), db.Id(intentionId))
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -268,7 +248,7 @@ func DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // CheckIntentionAction reports whether a call is allowed.
-func CheckIntentionAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) CheckIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -284,11 +264,7 @@ func CheckIntentionAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	im := module.NewIntention(
-		db.NewIntentionRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	result, err := im.CheckIntention(db.Id(wid), &req)
+	result, err := a.Intention.CheckIntention(db.Id(wid), &req)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):

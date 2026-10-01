@@ -18,7 +18,7 @@ import (
 )
 
 // ListAgentsAction lists agents in a workspace.
-func ListAgentsAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) ListAgentsAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -29,12 +29,7 @@ func ListAgentsAction(w http.ResponseWriter, r *http.Request) {
 
 	limit, offset := util.ParsePagination(r)
 
-	am := module.NewAgent(
-		db.NewAgentRepository(db.GetDB()),
-		db.NewAgentInstanceRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	result, err := am.ListAgents(db.Id(wid), limit, offset)
+	result, err := a.Agent.ListAgents(db.Id(wid), limit, offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -61,7 +56,7 @@ func ListAgentsAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAgentAction returns one agent by name.
-func GetAgentAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetAgentAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -78,12 +73,7 @@ func GetAgentAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	am := module.NewAgent(
-		db.NewAgentRepository(db.GetDB()),
-		db.NewAgentInstanceRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	agent, err := am.GetAgent(db.Id(wid), agentName)
+	agent, err := a.Agent.GetAgent(db.Id(wid), agentName)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -111,7 +101,7 @@ func GetAgentAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpsertAgentAction registers or replaces an agent card.
-func UpsertAgentAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) UpsertAgentAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -140,12 +130,7 @@ func UpsertAgentAction(w http.ResponseWriter, r *http.Request) {
 		Str("agent", agentName).
 		Msg("Upserting agent")
 
-	am := module.NewAgent(
-		db.NewAgentRepository(db.GetDB()),
-		db.NewAgentInstanceRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	agent, created, err := am.UpsertAgent(db.Id(wid), agentName, &req)
+	agent, created, err := a.Agent.UpsertAgent(db.Id(wid), agentName, &req)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -181,7 +166,7 @@ func UpsertAgentAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteAgentAction removes an agent by name.
-func DeleteAgentAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) DeleteAgentAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -203,12 +188,7 @@ func DeleteAgentAction(w http.ResponseWriter, r *http.Request) {
 		Str("agent", agentName).
 		Msg("Deleting agent")
 
-	am := module.NewAgent(
-		db.NewAgentRepository(db.GetDB()),
-		db.NewAgentInstanceRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	err := am.DeleteAgent(db.Id(wid), agentName)
+	err := a.Agent.DeleteAgent(db.Id(wid), agentName)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):

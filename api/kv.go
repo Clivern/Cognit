@@ -19,7 +19,7 @@ import (
 )
 
 // ListKeyValueAction lists workspace keys, optionally filtered by prefix.
-func ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -28,11 +28,7 @@ func ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	km := module.NewKeyValue(
-		db.NewWorkspaceKeyValueRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	result, err := km.ListKeyValue(db.Id(wid), r.URL.Query().Get("prefix"))
+	result, err := a.KeyValue.ListKeyValue(db.Id(wid), r.URL.Query().Get("prefix"))
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -61,7 +57,7 @@ func ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetKeyValueAction returns one workspace key. The key may contain slashes.
-func GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -78,11 +74,7 @@ func GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	km := module.NewKeyValue(
-		db.NewWorkspaceKeyValueRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	item, err := km.GetKeyValue(db.Id(wid), key)
+	item, err := a.KeyValue.GetKeyValue(db.Id(wid), key)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -110,7 +102,7 @@ func GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // PutKeyValueAction writes a workspace key.
-func PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -139,11 +131,7 @@ func PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 		Str("key", key).
 		Msg("Writing workspace key")
 
-	km := module.NewKeyValue(
-		db.NewWorkspaceKeyValueRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	item, err := km.PutKeyValue(db.Id(wid), key, &req)
+	item, err := a.KeyValue.PutKeyValue(db.Id(wid), key, &req)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -171,7 +159,7 @@ func PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteKeyValueAction removes a workspace key.
-func DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -193,11 +181,7 @@ func DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
 		Str("key", key).
 		Msg("Deleting workspace key")
 
-	km := module.NewKeyValue(
-		db.NewWorkspaceKeyValueRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	err := km.DeleteKeyValue(db.Id(wid), key)
+	err := a.KeyValue.DeleteKeyValue(db.Id(wid), key)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):

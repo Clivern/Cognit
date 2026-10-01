@@ -18,7 +18,7 @@ import (
 )
 
 // ListTrafficAction lists recorded gateway calls for a workspace.
-func ListTrafficAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) ListTrafficAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -29,11 +29,7 @@ func ListTrafficAction(w http.ResponseWriter, r *http.Request) {
 
 	limit, offset := util.ParsePagination(r)
 
-	tm := module.NewTraffic(
-		db.NewTrafficRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	result, err := tm.ListTraffic(db.Id(wid), limit, offset)
+	result, err := a.Traffic.ListTraffic(db.Id(wid), limit, offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -60,7 +56,7 @@ func ListTrafficAction(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTrafficAction returns one recorded gateway call.
-func GetTrafficAction(w http.ResponseWriter, r *http.Request) {
+func (a *API) GetTrafficAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
 		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
@@ -77,11 +73,7 @@ func GetTrafficAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tm := module.NewTraffic(
-		db.NewTrafficRepository(db.GetDB()),
-		db.NewWorkspaceRepository(db.GetDB()),
-	)
-	call, err := tm.GetTraffic(db.Id(wid), db.Id(trafficId))
+	call, err := a.Traffic.GetTraffic(db.Id(wid), db.Id(trafficId))
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
