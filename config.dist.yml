@@ -5,6 +5,9 @@ app:
   url: ${COGNIT_SERVER_URL:-http://127.0.0.1:8000}
   timeout: ${COGNIT_SERVER_TIMEOUT:-50}
 
+  encryption:
+    key: ${COGNIT_ENCRYPTION_KEY:-}
+
   metrics:
     username: ${COGNIT_SERVER_PROM_METRICS_USERNAME:-admin}
     secret: ${COGNIT_SERVER_PROM_METRICS_SECRET:-secret}
