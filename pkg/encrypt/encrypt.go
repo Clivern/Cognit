@@ -1,7 +1,6 @@
 // Copyright 2026 Cognit. All rights reserved.
 // License can be found in the LICENSE file.
 
-// Package encrypt encrypts and decrypts values with the app encryption key.
 package encrypt
 
 import (
