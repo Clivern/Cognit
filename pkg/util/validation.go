@@ -179,7 +179,7 @@ func validateStrongPassword(fl validator.FieldLevel) bool {
 }
 
 // DecodeJSON reads and decodes JSON from the request body.
-func DecodeJSON(r *http.Request, v interface{}) error {
+func DecodeJSON(r *http.Request, v any) error {
 	err := json.NewDecoder(r.Body).Decode(v)
 	if err != nil {
 		return fmt.Errorf("Invalid JSON format: %w", err)
@@ -188,8 +188,8 @@ func DecodeJSON(r *http.Request, v interface{}) error {
 	return nil
 }
 
-// DecodeAndValidate decodes JSON and validates the struct in one step
-func DecodeAndValidate(r *http.Request, v interface{}) error {
+// DecodeAndValidate decodes JSON and validates the struct in one step.
+func DecodeAndValidate(r *http.Request, v any) error {
 	err := DecodeJSON(r, v)
 	if err != nil {
 		return err
@@ -198,18 +198,14 @@ func DecodeAndValidate(r *http.Request, v interface{}) error {
 	return ValidateStruct(v)
 }
 
-// WriteValidationError writes validation errors as JSON response
+// WriteValidationError writes a decode or validation error as a 400 JSON response.
 func WriteValidationError(w http.ResponseWriter, err error) {
-	w.Header().Set("Content-Type", "application/json")
-
+	message := err.Error()
 	if validationErrs, ok := err.(validator.ValidationErrors); ok {
-		w.WriteHeader(http.StatusBadRequest)
-		WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
-			"errorMessage": FormatValidationErrors(validationErrs),
-		})
-	} else {
-		WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
-			"errorMessage": err.Error(),
-		})
+		message = FormatValidationErrors(validationErrs)
 	}
+
+	WriteJSON(w, http.StatusBadRequest, map[string]any{
+		"errorMessage": message,
+	})
 }

@@ -181,35 +181,46 @@ func TestUnitValidation(t *testing.T) {
 			})
 		}
 	})
+}
 
-	t.Run("Complete request validation workflow", func(t *testing.T) {
-		assert.NotNil(t, GetValidator())
+type testRequestBody struct {
+	Email string `json:"email" validate:"required,email"`
+	Name  string `json:"name" validate:"required,min=2,max=50"`
+}
 
-		validBody := `{"email":"test@example.com","url":"https://example.com","password":"SecurePass123!","name":"John"}`
-		req := httptest.NewRequest("POST", "/", strings.NewReader(validBody))
-		var data testValidationStruct
+func TestUnitHTTPValidation(t *testing.T) {
+	t.Run("DecodeAndValidate", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"email":"test@example.com","name":"John"}`))
+		var data testRequestBody
 		assert.NoError(t, DecodeAndValidate(req, &data))
 		assert.Equal(t, "test@example.com", data.Email)
 
-		invalidJSON := httptest.NewRequest("POST", "/", strings.NewReader(`{bad`))
-		var badJSON testValidationStruct
+		invalidJSON := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{bad`))
+		var badJSON testRequestBody
 		assert.Error(t, DecodeJSON(invalidJSON, &badJSON))
 
-		invalidData := httptest.NewRequest("POST", "/", strings.NewReader(`{"email":"bad","url":"bad","password":"weak","name":"J"}`))
-		var invalid testValidationStruct
-		err := DecodeAndValidate(invalidData, &invalid)
-		assert.Error(t, err)
+		invalidData := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"email":"bad","name":"J"}`))
+		var invalid testRequestBody
+		assert.Error(t, DecodeAndValidate(invalidData, &invalid))
+	})
+
+	t.Run("WriteValidationError", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"email":"bad","name":"J"}`))
+		var invalid testRequestBody
+		err := DecodeAndValidate(req, &invalid)
 
 		w := httptest.NewRecorder()
 		WriteValidationError(w, err)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
-		var resp map[string]interface{}
+		var resp map[string]any
 		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 		assert.NotEmpty(t, resp["errorMessage"])
 
 		wGeneric := httptest.NewRecorder()
 		WriteValidationError(wGeneric, bytes.ErrTooLarge)
 		assert.Equal(t, http.StatusBadRequest, wGeneric.Code)
+		assert.Contains(t, wGeneric.Body.String(), bytes.ErrTooLarge.Error())
 	})
 }
