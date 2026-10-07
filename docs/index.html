@@ -30,6 +30,7 @@
       --cyan-soft: #0891b2;
       --health: #059669;
       --amber: #d97706;
+      --down: #dc2626;
       --ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -77,12 +78,6 @@
       stroke: rgba(55, 53, 47, 0.08);
       stroke-width: 1;
       stroke-dasharray: 2 7;
-    }
-
-    .mesh {
-      fill: none;
-      stroke: rgba(55, 53, 47, 0.07);
-      stroke-width: 1;
     }
 
     .link {
@@ -194,6 +189,62 @@
     .tag-dot.cyan { fill: var(--cyan); }
     .tag-dot.health { fill: var(--health); }
     .tag-dot.amber { fill: var(--amber); }
+
+    .agent-tag .iid {
+      fill: var(--ink-soft);
+      font-weight: 400;
+    }
+
+    /* Instance churn: unhealthy -> deregistered -> new instance registers. */
+    .agent {
+      transform-box: fill-box;
+      transform-origin: center;
+      transition: opacity 0.6s var(--ease);
+    }
+
+    .agent .agent-body,
+    .agent .tip,
+    .agent .tag-dot {
+      transition: fill 0.4s var(--ease), stroke 0.4s var(--ease);
+    }
+
+    .agent.unhealthy .agent-body {
+      stroke: var(--down);
+      stroke-dasharray: 4 3;
+    }
+
+    .agent.unhealthy .tip,
+    .agent.unhealthy .tag-dot {
+      fill: var(--down);
+      animation: blink 0.9s steps(2, start) infinite;
+    }
+
+    .agent.offline { opacity: 0.12; }
+
+    .agent.joining { animation: join 0.7s var(--ease); }
+
+    .link,
+    .msg-route {
+      transition: opacity 0.6s var(--ease), stroke 0.4s var(--ease);
+    }
+
+    .link.unhealthy { stroke: rgba(220, 38, 38, 0.55); }
+
+    .status {
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      text-anchor: middle;
+      fill: var(--down);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease);
+    }
+
+    .status.up { fill: var(--health); }
+    .status.show { opacity: 1; }
+
+    .link.offline,
+    .msg-route.muted { opacity: 0; }
 
     .page {
       position: relative;
@@ -344,6 +395,16 @@
       100% { transform: scale(1.6); opacity: 0; }
     }
 
+    @keyframes blink {
+      to { opacity: 0.25; }
+    }
+
+    @keyframes join {
+      0% { transform: scale(0.6); opacity: 0; }
+      60% { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
     @keyframes beat {
       0% { stroke-dashoffset: 18; }
       70%, 100% { stroke-dashoffset: -100; }
@@ -361,62 +422,70 @@
       <svg viewBox="0 0 720 560" preserveAspectRatio="xMidYMid meet">
         <ellipse class="orbit-ring" cx="360" cy="280" rx="300" ry="235" />
         <ellipse class="orbit-ring" cx="360" cy="280" rx="160" ry="128" />
-        <path class="mesh" d="M110 105 L345 38" />
-        <path class="mesh" d="M345 38 L590 88" />
-        <path class="mesh" d="M590 88 L676 268" />
-        <path class="mesh" d="M676 268 L600 470" />
-        <path class="mesh" d="M600 470 L372 528" />
-        <path class="mesh" d="M372 528 L128 462" />
-        <path class="mesh" d="M128 462 L46 290" />
-        <path class="mesh" d="M46 290 L110 105" />
-        <path class="link cyan" d="M110 105 Q263 152 360 280" />
-        <path class="link health" d="M345 38 Q314 161 360 280" />
-        <path class="link" d="M590 88 Q506 221 360 280" />
-        <path class="link cyan" d="M676 268 Q516 223 360 280" />
-        <path class="link health" d="M600 470 Q450 413 360 280" />
-        <path class="link" d="M372 528 Q406 402 360 280" />
-        <path class="link cyan" d="M128 462 Q215 334 360 280" />
-        <path class="link health" d="M46 290 Q205 335 360 280" />
-        <circle class="msg" r="3">
+        <path class="link cyan" data-agent="planner" d="M110 105 Q263 152 360 280" />
+        <path class="link health" data-agent="search" d="M345 38 Q314 161 360 280" />
+        <path class="link" data-agent="billing" d="M590 88 Q506 221 360 280" />
+        <path class="link cyan" data-agent="translate" d="M676 268 Q516 223 360 280" />
+        <path class="link health" data-agent="summarize" d="M600 470 Q450 413 360 280" />
+        <path class="link" data-agent="codegen" d="M372 528 Q406 402 360 280" />
+        <path class="link cyan" data-agent="vision" d="M128 462 Q215 334 360 280" />
+        <path class="link health" data-agent="support" d="M46 290 Q205 335 360 280" />
+        <g class="msg-route" data-route="planner summarize">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="6.4s" begin="0.0s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="6.4s" begin="0.0s" repeatCount="indefinite" />
           <animateMotion dur="6.4s" begin="0.0s" repeatCount="indefinite" path="M110 105 Q263 152 360 280 Q450 413 600 470 Q450 413 360 280 Q263 152 110 105" />
         </circle>
-        <circle class="msg" r="3">
+        </g>
+        <g class="msg-route" data-route="billing vision">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="7.0s" begin="1.1s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="7.0s" begin="1.1s" repeatCount="indefinite" />
           <animateMotion dur="7.0s" begin="1.1s" repeatCount="indefinite" path="M590 88 Q506 221 360 280 Q215 334 128 462 Q215 334 360 280 Q506 221 590 88" />
         </circle>
-        <circle class="msg" r="3">
+        </g>
+        <g class="msg-route" data-route="support translate">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="6.8s" begin="2.3s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="6.8s" begin="2.3s" repeatCount="indefinite" />
           <animateMotion dur="6.8s" begin="2.3s" repeatCount="indefinite" path="M46 290 Q205 335 360 280 Q516 223 676 268 Q516 223 360 280 Q205 335 46 290" />
         </circle>
-        <circle class="msg" r="3">
+        </g>
+        <g class="msg-route" data-route="search codegen">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="6.0s" begin="3.4s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="6.0s" begin="3.4s" repeatCount="indefinite" />
           <animateMotion dur="6.0s" begin="3.4s" repeatCount="indefinite" path="M345 38 Q314 161 360 280 Q406 402 372 528 Q406 402 360 280 Q314 161 345 38" />
         </circle>
-        <circle class="msg" r="3">
+        </g>
+        <g class="msg-route" data-route="codegen planner">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="7.2s" begin="4.2s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="7.2s" begin="4.2s" repeatCount="indefinite" />
           <animateMotion dur="7.2s" begin="4.2s" repeatCount="indefinite" path="M372 528 Q406 402 360 280 Q263 152 110 105 Q263 152 360 280 Q406 402 372 528" />
         </circle>
-        <circle class="msg" r="3">
+        </g>
+        <g class="msg-route" data-route="translate support">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="6.6s" begin="5.3s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="6.6s" begin="5.3s" repeatCount="indefinite" />
           <animateMotion dur="6.6s" begin="5.3s" repeatCount="indefinite" path="M676 268 Q516 223 360 280 Q205 335 46 290 Q205 335 360 280 Q516 223 676 268" />
         </circle>
-        <circle class="msg" r="3">
+        </g>
+        <g class="msg-route" data-route="vision billing">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="7.4s" begin="0.6s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="7.4s" begin="0.6s" repeatCount="indefinite" />
           <animateMotion dur="7.4s" begin="0.6s" repeatCount="indefinite" path="M128 462 Q215 334 360 280 Q506 221 590 88 Q506 221 360 280 Q215 334 128 462" />
         </circle>
-        <circle class="msg" r="3">
+        </g>
+        <g class="msg-route" data-route="summarize search">
+          <circle class="msg" r="3">
           <animate attributeName="opacity" values="0;1;1;0.15;1;1;0" keyTimes="0;0.06;0.47;0.5;0.53;0.94;1" dur="6.2s" begin="2.9s" repeatCount="indefinite" />
           <animate attributeName="fill" values="#0e7490;#059669" keyTimes="0;0.5" calcMode="discrete" dur="6.2s" begin="2.9s" repeatCount="indefinite" />
           <animateMotion dur="6.2s" begin="2.9s" repeatCount="indefinite" path="M600 470 Q450 413 360 280 Q314 161 345 38 Q314 161 360 280 Q450 413 600 470" />
         </circle>
+        </g>
         <circle class="hub-halo" cx="360" cy="280" r="66" />
         <circle class="hub-halo late" cx="360" cy="280" r="66" />
         <circle class="hub" cx="360" cy="280" r="66" />
@@ -424,7 +493,7 @@
           <path class="hub-logo" d="M24.49,2.02 L25.20,2.02 L25.80,2.62 L39.71,46.56 L47.17,29.23 L47.57,29.03 L56.44,29.03 L57.15,29.73 L57.15,34.37 L56.84,34.77 L56.44,34.97 L51.30,34.97 L51.00,35.17 L40.11,61.08 L39.41,61.98 L38.70,61.98 L38.10,61.38 L24.19,17.64 L17.34,33.97 L16.73,34.87 L7.46,34.97 L6.85,34.37 L6.85,29.73 L7.06,29.33 L7.66,29.03 L12.80,29.03 L13.00,28.83 L23.89,2.62 L24.49,2.02 Z" />
           <path class="hub-beat" pathLength="100" d="M9.8 32 L15 32 L24.6 7.5 L39 54 L49.2 32 L54.2 32" />
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="planner">
           <line class="antenna" x1="110" y1="88" x2="110" y2="81" />
           <circle class="tip cyan" cx="110" cy="79" r="2.6" />
           <rect class="agent-body" x="92" y="88" width="36" height="34" rx="10" />
@@ -435,7 +504,7 @@
             <text x="115.0" y="142.5">planner</text>
           </g>
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="search">
           <line class="antenna" x1="345" y1="21" x2="345" y2="14" />
           <circle class="tip health" cx="345" cy="12" r="2.6" />
           <rect class="agent-body" x="327" y="21" width="36" height="34" rx="10" />
@@ -446,7 +515,7 @@
             <text x="350.0" y="75.5">search</text>
           </g>
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="billing">
           <line class="antenna" x1="590" y1="71" x2="590" y2="64" />
           <circle class="tip amber" cx="590" cy="62" r="2.6" />
           <rect class="agent-body" x="572" y="71" width="36" height="34" rx="10" />
@@ -457,7 +526,7 @@
             <text x="595.0" y="125.5">billing</text>
           </g>
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="translate">
           <line class="antenna" x1="676" y1="251" x2="676" y2="244" />
           <circle class="tip cyan" cx="676" cy="242" r="2.6" />
           <rect class="agent-body" x="658" y="251" width="36" height="34" rx="10" />
@@ -468,7 +537,7 @@
             <text x="681.0" y="305.5">translate</text>
           </g>
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="summarize">
           <line class="antenna" x1="600" y1="453" x2="600" y2="446" />
           <circle class="tip health" cx="600" cy="444" r="2.6" />
           <rect class="agent-body" x="582" y="453" width="36" height="34" rx="10" />
@@ -479,7 +548,7 @@
             <text x="605.0" y="507.5">summarize</text>
           </g>
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="codegen">
           <line class="antenna" x1="372" y1="511" x2="372" y2="504" />
           <circle class="tip ink" cx="372" cy="502" r="2.6" />
           <rect class="agent-body" x="354" y="511" width="36" height="34" rx="10" />
@@ -490,7 +559,7 @@
             <text x="377.0" y="565.5">codegen</text>
           </g>
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="vision">
           <line class="antenna" x1="128" y1="445" x2="128" y2="438" />
           <circle class="tip cyan" cx="128" cy="436" r="2.6" />
           <rect class="agent-body" x="110" y="445" width="36" height="34" rx="10" />
@@ -501,7 +570,7 @@
             <text x="133.0" y="499.5">vision</text>
           </g>
         </g>
-        <g class="agent">
+        <g class="agent" data-agent="support">
           <rect class="agent-body" x="28" y="273" width="36" height="34" rx="10" />
           <path class="headset" d="M25 291 Q25 275 46 275 Q67 275 67 291" /><rect class="earcup" x="23" y="287" width="5" height="10" rx="2.5" /><rect class="earcup" x="64" y="287" width="5" height="10" rx="2.5" /><circle class="eye" cx="39.5" cy="289" r="2.6" /><circle class="eye" cx="52.5" cy="289" r="2.6" /><path class="mouth" d="M41 296.5 Q46 301 51 296.5" />
           <g class="agent-tag">
@@ -528,5 +597,139 @@
   <footer class="site-footer">
     <a href="https://clivern.com" target="_blank" rel="noopener">Copyright © 2026 Clivern</a>
   </footer>
+
+  <script>
+    (function () {
+      var svg = document.querySelector('.orbit svg');
+      if (!svg) return;
+
+      var SVG_NS = 'http://www.w3.org/2000/svg';
+      var agents = {};
+      var busy = 0;
+
+      function instanceIp() {
+        var octet = function (min, max) {
+          return min + Math.floor(Math.random() * (max - min + 1));
+        };
+        return '10.0.' + octet(0, 9) + '.' + octet(2, 254);
+      }
+
+      // Resize the pill to fit "name ip".
+      function fit(a) {
+        var w = a.text.getComputedTextLength() + 28;
+        var cx = parseFloat(a.text.getAttribute('x')) - 5;
+        a.rect.setAttribute('x', (cx - w / 2).toFixed(1));
+        a.rect.setAttribute('width', w.toFixed(1));
+        a.dot.setAttribute('cx', (cx - w / 2 + 10).toFixed(1));
+      }
+
+      function setLabel(a) {
+        a.iid.textContent = ' ' + instanceIp();
+        fit(a);
+      }
+
+      svg.querySelectorAll('.agent').forEach(function (el) {
+        var name = el.dataset.agent;
+        var text = el.querySelector('.agent-tag text');
+        var iid = document.createElementNS(SVG_NS, 'tspan');
+        iid.setAttribute('class', 'iid');
+        text.appendChild(iid);
+        var a = {
+          name: name,
+          el: el,
+          text: text,
+          iid: iid,
+          rect: el.querySelector('.agent-tag rect'),
+          dot: el.querySelector('.tag-dot'),
+          link: svg.querySelector('.link[data-agent="' + name + '"]'),
+          status: document.createElementNS(SVG_NS, 'text'),
+          state: 'healthy'
+        };
+        var rect = a.rect;
+        a.status.setAttribute('class', 'status');
+        a.status.setAttribute('x', parseFloat(text.getAttribute('x')) - 5);
+        a.status.setAttribute('y', parseFloat(rect.getAttribute('y')) + 31);
+        svg.appendChild(a.status);
+        setLabel(a);
+        agents[name] = a;
+      });
+
+      // Re-measure pills once the web font is in.
+      if (document.fonts) {
+        document.fonts.ready.then(function () {
+          Object.keys(agents).forEach(function (n) { fit(agents[n]); });
+        });
+      }
+
+      var routes = Array.prototype.slice.call(svg.querySelectorAll('.msg-route'));
+
+      // Hide in-flight messages that touch an instance which isn't healthy.
+      function syncRoutes() {
+        routes.forEach(function (r) {
+          var muted = r.dataset.route.split(' ').some(function (n) {
+            return agents[n].state !== 'healthy';
+          });
+          r.classList.toggle('muted', muted);
+        });
+      }
+
+      var STATUS = {
+        unhealthy: 'health check failed',
+        offline: 'deregistered',
+        joining: 'registered'
+      };
+
+      // Status line under the pill; "registered" lingers briefly once healthy.
+      function setStatus(a, state) {
+        clearTimeout(a.statusTimer);
+        if (state === 'healthy') {
+          a.statusTimer = setTimeout(function () {
+            a.status.classList.remove('show');
+          }, 1400);
+          return;
+        }
+        a.status.textContent = STATUS[state];
+        a.status.setAttribute('class', 'status show' + (state === 'joining' ? ' up' : ''));
+      }
+
+      function setState(a, state) {
+        setStatus(a, state);
+        a.el.classList.remove('unhealthy', 'offline', 'joining');
+        a.link.classList.remove('unhealthy', 'offline');
+        a.state = state;
+        if (state !== 'healthy') {
+          a.el.classList.add(state);
+          if (state !== 'joining') a.link.classList.add(state);
+        }
+        syncRoutes();
+      }
+
+      function churn(a) {
+        busy++;
+        setState(a, 'unhealthy');
+        setTimeout(function () {
+          setState(a, 'offline');
+          setTimeout(function () {
+            setLabel(a);
+            setState(a, 'joining');
+            setTimeout(function () {
+              setState(a, 'healthy');
+              busy--;
+            }, 700);
+          }, 1800);
+        }, 2400);
+      }
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      setInterval(function () {
+        if (document.hidden || busy >= 2) return;
+        var healthy = Object.keys(agents).filter(function (n) {
+          return agents[n].state === 'healthy';
+        });
+        churn(agents[healthy[Math.floor(Math.random() * healthy.length)]]);
+      }, 3200);
+    })();
+  </script>
 </body>
 </html>
