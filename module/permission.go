@@ -44,6 +44,10 @@ const (
 	CanUpsertAgent = "CAN_UPSERT_AGENT"
 	CanDeleteAgent = "CAN_DELETE_AGENT"
 
+	CanListInstances    = "CAN_LIST_INSTANCES"
+	CanGetInstance      = "CAN_GET_INSTANCE"
+	CanRegisterInstance = "CAN_REGISTER_INSTANCE"
+
 	CanListIntentions  = "CAN_LIST_INTENTIONS"
 	CanGetIntention    = "CAN_GET_INTENTION"
 	CanCreateIntention = "CAN_CREATE_INTENTION"
@@ -66,7 +70,9 @@ var (
 )
 
 // AccessKeyPermissions lists permissions that may be assigned to workspace access keys.
-var AccessKeyPermissions = map[string]bool{}
+var AccessKeyPermissions = map[string]bool{
+	CanRegisterInstance: true,
+}
 
 // Perm checks workspace permissions for users and workspace access keys.
 type Perm struct {
@@ -140,6 +146,8 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 		CanGetWorkspaceBilling,
 		CanListAgents,
 		CanGetAgent,
+		CanListInstances,
+		CanGetInstance,
 		CanListIntentions,
 		CanGetIntention,
 		CanCheckIntention,
@@ -166,6 +174,7 @@ func (p *Perm) CanAsUser(permission string) (bool, error) {
 		CanGetWorkspaceAudit,
 		CanUpsertAgent,
 		CanDeleteAgent,
+		CanRegisterInstance,
 		CanCreateIntention,
 		CanUpdateIntention,
 		CanDeleteIntention,
