@@ -396,6 +396,15 @@ msgstr "Version d'agent invalide."
 msgid "failed_agent_request"
 msgstr "Impossible de traiter la requête agent."
 
+msgid "instance_not_found"
+msgstr "Instance introuvable."
+
+msgid "invalid_instance_id"
+msgstr "Identifiant d'instance invalide."
+
+msgid "failed_instance_request"
+msgstr "Impossible de traiter la requête d'instance."
+
 msgid "intention_not_found"
 msgstr "Intention introuvable."
 

@@ -408,6 +408,15 @@ msgstr "Invalid agent version."
 msgid "failed_agent_request"
 msgstr "Failed to complete the agent request."
 
+msgid "instance_not_found"
+msgstr "Instance not found."
+
+msgid "invalid_instance_id"
+msgstr "Invalid instance id."
+
+msgid "failed_instance_request"
+msgstr "Failed to complete the instance request."
+
 msgid "intention_not_found"
 msgstr "Intention not found."
 
