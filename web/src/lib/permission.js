@@ -1,7 +1,9 @@
 import { computed } from 'vue'
 import { loadUserFromStorage, loadWorkspaceFromStorage } from '@/utils/storage'
 
-export const WORKSPACE_KEY_PERMISSIONS = []
+export const WORKSPACE_KEY_PERMISSIONS = [
+  { value: 'CAN_REGISTER_INSTANCE', labelKey: 'workspace_settings_page.perm_register_instance' },
+]
 
 export const PLATFORM_ROLE_ADMIN = 'admin'
 export const PLATFORM_ROLE_REGULAR = 'regular'
