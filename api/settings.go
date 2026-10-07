@@ -8,7 +8,6 @@ import (
 
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/middleware"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/rs/zerolog/log"
 )
@@ -23,7 +22,7 @@ type UpdateSettingsRequest struct {
 func (a *API) UpdateSettingsAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -34,9 +33,9 @@ func (a *API) UpdateSettingsAction(w http.ResponseWriter, r *http.Request) {
 		Msg("Updating settings")
 
 	var req UpdateSettingsRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -46,7 +45,7 @@ func (a *API) UpdateSettingsAction(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("userId", user.Id.String()).
 			Msg("Failed to update settings")
-		util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+		a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 			"errorMessage": locale.TR(r, "failed_update_settings"),
 		})
 		return
@@ -56,7 +55,7 @@ func (a *API) UpdateSettingsAction(w http.ResponseWriter, r *http.Request) {
 		Str("userId", user.Id.String()).
 		Msg("Settings updated")
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"successMessage": locale.TR(r, "settings_updated_successfully"),
 	})
 }
@@ -65,7 +64,7 @@ func (a *API) UpdateSettingsAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) GetSettingsAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -82,13 +81,13 @@ func (a *API) GetSettingsAction(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("userId", user.Id.String()).
 			Msg("Failed to get settings")
-		util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+		a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 			"errorMessage": locale.TR(r, "failed_get_settings"),
 		})
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"settings": settings,
 	})
 }

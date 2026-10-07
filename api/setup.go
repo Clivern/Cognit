@@ -10,7 +10,6 @@ import (
 	"github.com/clivern/cognit/conf"
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/rs/zerolog/log"
 )
@@ -18,9 +17,9 @@ import (
 // SetupAction runs the initial platform setup.
 func (a *API) SetupAction(w http.ResponseWriter, r *http.Request) {
 	var req module.SetupRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -32,7 +31,7 @@ func (a *API) SetupAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrPlatformAlreadyInstalled):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "platform_already_installed"),
 			})
 		default:
@@ -40,7 +39,7 @@ func (a *API) SetupAction(w http.ResponseWriter, r *http.Request) {
 				Err(err).
 				Str("platformEmail", req.PlatformEmail).
 				Msg("Setup failed")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_complete_setup"),
 			})
 		}
@@ -51,7 +50,7 @@ func (a *API) SetupAction(w http.ResponseWriter, r *http.Request) {
 		Str("platformEmail", req.PlatformEmail).
 		Msg("Platform setup completed")
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"successMessage": locale.TR(r, "setup_completed_successfully"),
 	})
 }
@@ -60,7 +59,7 @@ func (a *API) SetupAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) SetupStatusAction(w http.ResponseWriter, _ *http.Request) {
 	log.Info().Msg("Setup status request")
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"installed": a.Setup.IsInstalled(),
 		"edition":   conf.Edition(),
 	})

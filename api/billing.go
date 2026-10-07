@@ -14,7 +14,6 @@ import (
 	"github.com/clivern/cognit/middleware"
 	"github.com/clivern/cognit/module"
 	"github.com/clivern/cognit/pkg/stripe"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -33,23 +32,23 @@ func (a *API) GetBillingStatusAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrBillingSubscriptionNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_subscription_not_found"),
 			})
 		default:
 			log.Error().Err(err).Msg("Failed to get billing status")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_billing_status"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, status)
+	a.WriteJSON(w, http.StatusOK, status)
 }
 
 // GetBillingUsageAction returns workspace usage and plan limits for billing.
@@ -66,37 +65,37 @@ func (a *API) GetBillingUsageAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrBillingSubscriptionNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_subscription_not_found"),
 			})
 		default:
 			log.Error().Err(err).Msg("Failed to get billing usage")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_billing_usage"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, usage)
+	a.WriteJSON(w, http.StatusOK, usage)
 }
 
 // CreateBillingCheckoutAction creates a Stripe Checkout session for AI tokens.
 func (a *API) CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request) {
 	var req module.BillingCheckoutRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -121,31 +120,31 @@ func (a *API) CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrBillingSubscriptionNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_subscription_not_found"),
 			})
 		case errors.Is(err, stripe.ErrInvalidAmount):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_billing_amount"),
 			})
 		case errors.Is(err, stripe.ErrBillingDisabled):
-			util.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
+			a.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
 				"errorMessage": locale.TR(r, "stripe_billing_not_configured"),
 			})
 		default:
 			log.Error().Err(err).Msg("Failed to create billing checkout session")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_create_billing_checkout_session"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, session)
+	a.WriteJSON(w, http.StatusOK, session)
 }
 
 // CreateBillingPortalAction creates a Stripe Billing Portal session.
@@ -164,31 +163,31 @@ func (a *API) CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrBillingPortalUnavailable):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "stripe_billing_available_after_purchase"),
 			})
 		case errors.Is(err, module.ErrBillingSubscriptionNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_subscription_not_found"),
 			})
 		case errors.Is(err, stripe.ErrBillingDisabled):
-			util.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
+			a.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
 				"errorMessage": locale.TR(r, "stripe_billing_not_configured"),
 			})
 		default:
 			log.Error().Err(err).Msg("Failed to create billing portal session")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_create_billing_portal_session"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, session)
+	a.WriteJSON(w, http.StatusOK, session)
 }
 
 // StripeWebhookAction receives Stripe billing webhook events.
@@ -196,7 +195,7 @@ func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 	payload, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
 	if err != nil {
 		log.Warn().Err(err).Msg("Stripe webhook rejected: failed to read payload")
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_webhook_payload"),
 		})
 		return
@@ -213,12 +212,12 @@ func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, stripe.ErrBillingDisabled), errors.Is(err, stripe.ErrWebhookNotConfigured):
 			log.Warn().Err(err).Msg("Stripe webhook rejected: billing not configured")
-			util.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
+			a.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
 				"errorMessage": locale.TR(r, "stripe_billing_not_configured"),
 			})
 		default:
 			log.Error().Err(err).Msg("Failed to handle Stripe webhook")
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_stripe_webhook"),
 			})
 		}
@@ -227,7 +226,7 @@ func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 
 	log.Info().Msg("Stripe webhook handled")
 
-	util.WriteJSON(w, http.StatusOK, module.BillingWebhookResponse{
+	a.WriteJSON(w, http.StatusOK, module.BillingWebhookResponse{
 		Received: true,
 	})
 }

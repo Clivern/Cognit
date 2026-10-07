@@ -20,7 +20,7 @@ import (
 func (a *API) GetProfileAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -37,13 +37,13 @@ func (a *API) GetProfileAction(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("userId", user.Id.String()).
 			Msg("Failed to get profile")
-		util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+		a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 			"errorMessage": locale.TR(r, "failed_get_profile"),
 		})
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"user": map[string]any{
 			"id":              profile.Id,
 			"email":           profile.Email,
@@ -67,7 +67,7 @@ func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -77,9 +77,9 @@ func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 		Str("userId", user.Id.String()).
 		Msg("Updating profile")
 
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 				Err(err).
 				Str("userId", user.Id.String()).
 				Msg("Failed to update profile")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_update_profile"),
 			})
 		default:
@@ -100,7 +100,7 @@ func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 				Err(err).
 				Str("userId", user.Id.String()).
 				Msg("Failed to update profile")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_update_profile"),
 			})
 		}
@@ -111,7 +111,7 @@ func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 		Str("userId", updated.Id.String()).
 		Msg("Profile updated")
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"user": map[string]any{
 			"id":              updated.Id,
 			"email":           updated.Email,
