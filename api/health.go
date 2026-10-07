@@ -6,8 +6,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/clivern/cognit/pkg/util"
-
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,7 +13,7 @@ import (
 func (a *API) HealthAction(w http.ResponseWriter, _ *http.Request) {
 	log.Debug().Msg("Health check")
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"status": "ok",
 	})
 }

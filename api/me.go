@@ -9,7 +9,6 @@ import (
 
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/rs/zerolog/log"
 	"github.com/samber/lo"
@@ -21,7 +20,7 @@ func (a *API) GetMeAction(w http.ResponseWriter, r *http.Request) {
 	accessKey := r.Header.Get("X-Access-Key")
 
 	if lo.IsEmpty(apiKey) && lo.IsEmpty(accessKey) {
-		util.WriteJSON(w, http.StatusForbidden, map[string]any{
+		a.WriteJSON(w, http.StatusForbidden, map[string]any{
 			"errorMessage": locale.TR(r, "me_requires_key_header"),
 		})
 		return
@@ -34,19 +33,19 @@ func (a *API) GetMeAction(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			switch {
 			case errors.Is(err, module.ErrAPIKeyNotFound):
-				util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+				a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 					"errorMessage": locale.TR(r, "invalid_api_key"),
 				})
 			default:
 				log.Error().Err(err).Msg("Failed to resolve API key for /me")
-				util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+				a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 					"errorMessage": locale.TR(r, "failed_get_me"),
 				})
 			}
 			return
 		}
 
-		util.WriteJSON(w, http.StatusOK, me)
+		a.WriteJSON(w, http.StatusOK, me)
 		return
 	}
 
@@ -55,17 +54,17 @@ func (a *API) GetMeAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrAccessKeyNotFound):
-			util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+			a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_access_key"),
 			})
 		default:
 			log.Error().Err(err).Msg("Failed to resolve access key for /me")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_me"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, me)
+	a.WriteJSON(w, http.StatusOK, me)
 }
