@@ -131,6 +131,14 @@ func SetupServer(Static embed.FS, a *api.API) http.Handler {
 			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanUpsertAgent})).Put("/{agentName}", a.UpsertAgentAction)    // register or replace an agent card
 			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetAgent})).Get("/{agentName}", a.GetAgentAction)          // get an agent
 			r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanDeleteAgent})).Delete("/{agentName}", a.DeleteAgentAction) // delete an agent
+
+			r.Route("/{agentName}/instances", func(r chi.Router) {
+				r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanListInstances})).Get("/", a.ListInstancesAction)            // list agent instances
+				r.With(middleware.Protect(middleware.Config{User: true, Perm: module.CanGetInstance})).Get("/{instanceId}", a.GetInstanceAction)    // get an agent instance
+				r.With(middleware.Protect(middleware.Config{Perm: module.CanRegisterInstance})).Put("/{instanceId}", a.RegisterInstanceAction)      // register or update an instance and start its lease
+				r.With(middleware.Protect(middleware.Config{Perm: module.CanRegisterInstance})).Put("/{instanceId}/renew", a.RenewInstanceAction)   // renew an instance lease
+				r.With(middleware.Protect(middleware.Config{Perm: module.CanRegisterInstance})).Delete("/{instanceId}", a.DeregisterInstanceAction) // deregister an instance
+			})
 		})
 
 		r.Route("/intentions", func(r chi.Router) {
