@@ -10,7 +10,6 @@ import (
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -21,7 +20,7 @@ import (
 func (a *API) GetWorkspaceStatsAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -31,7 +30,7 @@ func (a *API) GetWorkspaceStatsAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
@@ -39,12 +38,12 @@ func (a *API) GetWorkspaceStatsAction(w http.ResponseWriter, r *http.Request) {
 				Err(err).
 				Str("workspaceId", wid).
 				Msg("Failed to get workspace stats")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_workspace_stats"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, stats)
+	a.WriteJSON(w, http.StatusOK, stats)
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -21,32 +20,32 @@ import (
 func (a *API) ListWorkspaceAuditsAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
 	}
 	workspaceId := db.Id(wid)
 
-	limit, offset := util.ParsePagination(r)
+	limit, offset := a.ParsePagination(r)
 
 	result, err := a.Audit.ListAuditEvents(workspaceId, limit, offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list audit events")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_list_audits"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"audits": result.Events,
 		"_meta": map[string]any{
 			"limit":  limit,
@@ -60,7 +59,7 @@ func (a *API) ListWorkspaceAuditsAction(w http.ResponseWriter, r *http.Request) 
 func (a *API) GetWorkspaceAuditAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -69,7 +68,7 @@ func (a *API) GetWorkspaceAuditAction(w http.ResponseWriter, r *http.Request) {
 
 	auditId := chi.URLParam(r, "auditId")
 	if lo.IsEmpty(auditId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_audit_id"),
 		})
 		return
@@ -79,21 +78,21 @@ func (a *API) GetWorkspaceAuditAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrAuditEventNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "audit_event_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("auditId", auditId).Msg("Failed to get audit event")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_audit"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, event)
+	a.WriteJSON(w, http.StatusOK, event)
 }
