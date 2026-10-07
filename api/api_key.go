@@ -11,7 +11,6 @@ import (
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/middleware"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -22,7 +21,7 @@ import (
 func (a *API) CreateUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -33,9 +32,9 @@ func (a *API) CreateUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 		Msg("New API key request")
 
 	var req module.CreateAPIKeyRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -43,7 +42,7 @@ func (a *API) CreateUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrInvalidExpiresAt):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_expires_at_format"),
 			})
 			return
@@ -52,7 +51,7 @@ func (a *API) CreateUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 				Err(err).
 				Str("userId", user.Id.String()).
 				Msg("Failed to create API key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_create_api_key"),
 			})
 			return
@@ -64,14 +63,14 @@ func (a *API) CreateUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 		Str("apiKeyId", apiKey.Id.String()).
 		Msg("API key created")
 
-	util.WriteJSON(w, http.StatusCreated, apiKey)
+	a.WriteJSON(w, http.StatusCreated, apiKey)
 }
 
 // ListUserAPIKeysAction lists your API keys (metadata only, never the secret).
 func (a *API) ListUserAPIKeysAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -81,7 +80,7 @@ func (a *API) ListUserAPIKeysAction(w http.ResponseWriter, r *http.Request) {
 		Str("userId", user.Id.String()).
 		Msg("Listing API keys")
 
-	limit, offset := util.ParsePagination(r)
+	limit, offset := a.ParsePagination(r)
 
 	result, err := a.APIKey.ListAPIKeys(user, limit, offset)
 	if err != nil {
@@ -89,13 +88,13 @@ func (a *API) ListUserAPIKeysAction(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("userId", user.Id.String()).
 			Msg("Failed to list API keys")
-		util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+		a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 			"errorMessage": locale.TR(r, "failed_list_api_keys"),
 		})
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"keys": result.APIKeys,
 		"_meta": map[string]any{
 			"limit":  limit,
@@ -109,7 +108,7 @@ func (a *API) ListUserAPIKeysAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) GetUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -117,7 +116,7 @@ func (a *API) GetUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 
 	apiKeyId := chi.URLParam(r, "apiKeyId")
 	if lo.IsEmpty(apiKeyId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_api_key_id"),
 		})
 		return
@@ -132,7 +131,7 @@ func (a *API) GetUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrAPIKeyNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "api_key_not_found"),
 			})
 			return
@@ -142,21 +141,21 @@ func (a *API) GetUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 				Str("apiKeyId", apiKeyId).
 				Str("userId", user.Id.String()).
 				Msg("Failed to get API key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_api_key"),
 			})
 			return
 		}
 	}
 
-	util.WriteJSON(w, http.StatusOK, k)
+	a.WriteJSON(w, http.StatusOK, k)
 }
 
 // DeleteUserAPIKeyAction deletes one of your API keys.
 func (a *API) DeleteUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -164,7 +163,7 @@ func (a *API) DeleteUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 
 	apiKeyId := chi.URLParam(r, "apiKeyId")
 	if lo.IsEmpty(apiKeyId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_api_key_id"),
 		})
 		return
@@ -179,7 +178,7 @@ func (a *API) DeleteUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrAPIKeyNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "api_key_not_found"),
 			})
 			return
@@ -189,7 +188,7 @@ func (a *API) DeleteUserAPIKeyAction(w http.ResponseWriter, r *http.Request) {
 				Str("apiKeyId", apiKeyId).
 				Str("userId", user.Id.String()).
 				Msg("Failed to delete API key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_delete_api_key"),
 			})
 			return

@@ -10,7 +10,6 @@ import (
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -20,7 +19,7 @@ import (
 func (a *API) CreateAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if wid == "" {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -31,9 +30,9 @@ func (a *API) CreateAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 		Msg("New access key request")
 
 	var req module.CreateAccessKeyRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -41,34 +40,34 @@ func (a *API) CreateAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrInvalidExpiresAt):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_expires_at_format"),
 			})
 		case errors.Is(err, module.ErrInvalidAccessKeyPermissions):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_access_key_permissions"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to create workspace access key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_create_access_key"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusCreated, key)
+	a.WriteJSON(w, http.StatusCreated, key)
 }
 
 // ListAccessKeysAction lists workspace access keys (metadata only, never the secret).
 func (a *API) ListAccessKeysAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if wid == "" {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -78,25 +77,25 @@ func (a *API) ListAccessKeysAction(w http.ResponseWriter, r *http.Request) {
 		Str("workspaceId", wid).
 		Msg("Listing access keys")
 
-	limit, offset := util.ParsePagination(r)
+	limit, offset := a.ParsePagination(r)
 
 	result, err := a.Access.ListAccessKeys(db.Id(wid), limit, offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list workspace access keys")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_list_access_keys"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"keys": result.Keys,
 		"_meta": map[string]any{
 			"limit":  limit,
@@ -110,7 +109,7 @@ func (a *API) ListAccessKeysAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) GetAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if wid == "" {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -118,7 +117,7 @@ func (a *API) GetAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 
 	keyId := chi.URLParam(r, "keyId")
 	if keyId == "" {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_access_key_id"),
 		})
 		return
@@ -128,30 +127,30 @@ func (a *API) GetAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrAccessKeyNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "access_key_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("accessKeyId", keyId).Msg("Failed to get workspace access key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_access_key"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, key)
+	a.WriteJSON(w, http.StatusOK, key)
 }
 
 // DeleteAccessKeyAction deletes a workspace access key.
 func (a *API) DeleteAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if wid == "" {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -159,7 +158,7 @@ func (a *API) DeleteAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 
 	keyId := chi.URLParam(r, "keyId")
 	if keyId == "" {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_access_key_id"),
 		})
 		return
@@ -169,16 +168,16 @@ func (a *API) DeleteAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrAccessKeyNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "access_key_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("accessKeyId", keyId).Msg("Failed to delete workspace access key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_delete_access_key"),
 			})
 		}
