@@ -10,7 +10,6 @@ import (
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -21,31 +20,31 @@ import (
 func (a *API) ListIntentionsAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
 	}
 
-	limit, offset := util.ParsePagination(r)
+	limit, offset := a.ParsePagination(r)
 
 	result, err := a.Intention.ListIntentions(db.Id(wid), limit, offset)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list intentions")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"intentions": result.Intentions,
 		"_meta": map[string]any{
 			"limit":  limit,
@@ -59,7 +58,7 @@ func (a *API) ListIntentionsAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) GetIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -67,7 +66,7 @@ func (a *API) GetIntentionAction(w http.ResponseWriter, r *http.Request) {
 
 	intentionId := chi.URLParam(r, "intentionId")
 	if lo.IsEmpty(intentionId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_intention_id"),
 		})
 		return
@@ -77,39 +76,39 @@ func (a *API) GetIntentionAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrIntentionNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "intention_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Str("intentionId", intentionId).Msg("Failed to get intention")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, intention)
+	a.WriteJSON(w, http.StatusOK, intention)
 }
 
 // CreateIntentionAction inserts an allow or deny rule.
 func (a *API) CreateIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
 	}
 
 	var req module.SaveIntentionRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -124,30 +123,30 @@ func (a *API) CreateIntentionAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrInvalidIntentionAction):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_intention_action"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to create intention")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusCreated, intention)
+	a.WriteJSON(w, http.StatusCreated, intention)
 }
 
 // UpdateIntentionAction replaces an intention.
 func (a *API) UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -155,16 +154,16 @@ func (a *API) UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
 
 	intentionId := chi.URLParam(r, "intentionId")
 	if lo.IsEmpty(intentionId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_intention_id"),
 		})
 		return
 	}
 
 	var req module.SaveIntentionRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -178,34 +177,34 @@ func (a *API) UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrIntentionNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "intention_not_found"),
 			})
 		case errors.Is(err, module.ErrInvalidIntentionAction):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_intention_action"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Str("intentionId", intentionId).Msg("Failed to update intention")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, intention)
+	a.WriteJSON(w, http.StatusOK, intention)
 }
 
 // DeleteIntentionAction removes an intention.
 func (a *API) DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -213,7 +212,7 @@ func (a *API) DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 
 	intentionId := chi.URLParam(r, "intentionId")
 	if lo.IsEmpty(intentionId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_intention_id"),
 		})
 		return
@@ -228,16 +227,16 @@ func (a *API) DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrIntentionNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "intention_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Str("intentionId", intentionId).Msg("Failed to delete intention")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
 		}
@@ -251,16 +250,16 @@ func (a *API) DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) CheckIntentionAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
 	}
 
 	var req module.CheckIntentionRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -268,17 +267,17 @@ func (a *API) CheckIntentionAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to check intention")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, result)
+	a.WriteJSON(w, http.StatusOK, result)
 }

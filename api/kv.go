@@ -11,7 +11,6 @@ import (
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -22,7 +21,7 @@ import (
 func (a *API) ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -32,23 +31,23 @@ func (a *API) ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrInvalidKeyValueKey):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list workspace keys")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"items": result.Items,
 		"_meta": map[string]any{
 			"total": result.Total,
@@ -60,7 +59,7 @@ func (a *API) ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -68,7 +67,7 @@ func (a *API) GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 
 	key := strings.TrimPrefix(chi.URLParam(r, "*"), "/")
 	if lo.IsEmpty(key) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_kv_key"),
 		})
 		return
@@ -78,34 +77,34 @@ func (a *API) GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrKeyValueNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "kv_not_found"),
 			})
 		case errors.Is(err, module.ErrInvalidKeyValueKey):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Str("key", key).Msg("Failed to get workspace key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, item)
+	a.WriteJSON(w, http.StatusOK, item)
 }
 
 // PutKeyValueAction writes a workspace key.
 func (a *API) PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -113,16 +112,16 @@ func (a *API) PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 
 	key := strings.TrimPrefix(chi.URLParam(r, "*"), "/")
 	if lo.IsEmpty(key) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_kv_key"),
 		})
 		return
 	}
 
 	var req module.PutKeyValueRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -135,34 +134,34 @@ func (a *API) PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrInvalidKeyValueKey):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
 		case errors.Is(err, module.ErrInvalidExpiresAt):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_expires_at_format"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Str("key", key).Msg("Failed to write workspace key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, item)
+	a.WriteJSON(w, http.StatusOK, item)
 }
 
 // DeleteKeyValueAction removes a workspace key.
 func (a *API) DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -170,7 +169,7 @@ func (a *API) DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
 
 	key := strings.TrimPrefix(chi.URLParam(r, "*"), "/")
 	if lo.IsEmpty(key) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_kv_key"),
 		})
 		return
@@ -185,20 +184,20 @@ func (a *API) DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrKeyValueNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "kv_not_found"),
 			})
 		case errors.Is(err, module.ErrInvalidKeyValueKey):
-			util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
 		default:
 			log.Error().Err(err).Str("workspaceId", wid).Str("key", key).Msg("Failed to delete workspace key")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})
 		}
