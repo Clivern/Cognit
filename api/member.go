@@ -11,7 +11,6 @@ import (
 	"github.com/clivern/cognit/locale"
 	"github.com/clivern/cognit/middleware"
 	"github.com/clivern/cognit/module"
-	"github.com/clivern/cognit/pkg/util"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -22,7 +21,7 @@ import (
 func (a *API) ListWorkspaceMembersAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -30,7 +29,7 @@ func (a *API) ListWorkspaceMembersAction(w http.ResponseWriter, r *http.Request)
 
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -41,7 +40,7 @@ func (a *API) ListWorkspaceMembersAction(w http.ResponseWriter, r *http.Request)
 		Str("userId", user.Id.String()).
 		Msg("Listing workspace members")
 
-	limit, offset := util.ParsePagination(r)
+	limit, offset := a.ParsePagination(r)
 
 	result, err := a.Workspace.ListWorkspaceMembers(
 		db.Id(wid),
@@ -51,7 +50,7 @@ func (a *API) ListWorkspaceMembersAction(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
@@ -60,14 +59,14 @@ func (a *API) ListWorkspaceMembersAction(w http.ResponseWriter, r *http.Request)
 				Str("workspaceId", wid).
 				Str("userId", user.Id.String()).
 				Msg("Failed to list workspace members")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_list_workspace_members"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, map[string]any{
+	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"members": result.Members,
 		"_meta": map[string]any{
 			"limit":  limit,
@@ -81,7 +80,7 @@ func (a *API) ListWorkspaceMembersAction(w http.ResponseWriter, r *http.Request)
 func (a *API) UpdateWorkspaceMemberRoleAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -89,7 +88,7 @@ func (a *API) UpdateWorkspaceMemberRoleAction(w http.ResponseWriter, r *http.Req
 
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -97,16 +96,16 @@ func (a *API) UpdateWorkspaceMemberRoleAction(w http.ResponseWriter, r *http.Req
 
 	memberUserId := chi.URLParam(r, "memberUserId")
 	if lo.IsEmpty(memberUserId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_user_id"),
 		})
 		return
 	}
 
 	var req module.UpdateWorkspaceMemberRoleRequest
-	err := util.DecodeAndValidate(r, &req)
+	err := a.DecodeAndValidate(r, &req)
 	if err != nil {
-		util.WriteValidationError(w, err)
+		a.WriteValidationError(w, err)
 		return
 	}
 
@@ -125,11 +124,11 @@ func (a *API) UpdateWorkspaceMemberRoleAction(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrWorkspaceUserNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_member_not_found"),
 			})
 		default:
@@ -139,21 +138,21 @@ func (a *API) UpdateWorkspaceMemberRoleAction(w http.ResponseWriter, r *http.Req
 				Str("memberUserId", memberUserId).
 				Str("userId", user.Id.String()).
 				Msg("Failed to update workspace member role")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_update_workspace_member"),
 			})
 		}
 		return
 	}
 
-	util.WriteJSON(w, http.StatusOK, member)
+	a.WriteJSON(w, http.StatusOK, member)
 }
 
 // DeleteWorkspaceMemberAction removes a user from a workspace.
 func (a *API) DeleteWorkspaceMemberAction(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok || user == nil {
-		util.WriteJSON(w, http.StatusUnauthorized, map[string]any{
+		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
 		})
 		return
@@ -161,7 +160,7 @@ func (a *API) DeleteWorkspaceMemberAction(w http.ResponseWriter, r *http.Request
 
 	wid := chi.URLParam(r, "workspaceId")
 	if lo.IsEmpty(wid) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_workspace_id"),
 		})
 		return
@@ -169,7 +168,7 @@ func (a *API) DeleteWorkspaceMemberAction(w http.ResponseWriter, r *http.Request
 
 	memberUserId := chi.URLParam(r, "memberUserId")
 	if lo.IsEmpty(memberUserId) {
-		util.WriteJSON(w, http.StatusBadRequest, map[string]any{
+		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_user_id"),
 		})
 		return
@@ -188,11 +187,11 @@ func (a *API) DeleteWorkspaceMemberAction(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		case errors.Is(err, module.ErrWorkspaceUserNotFound):
-			util.WriteJSON(w, http.StatusNotFound, map[string]any{
+			a.WriteJSON(w, http.StatusNotFound, map[string]any{
 				"errorMessage": locale.TR(r, "workspace_member_not_found"),
 			})
 		default:
@@ -202,7 +201,7 @@ func (a *API) DeleteWorkspaceMemberAction(w http.ResponseWriter, r *http.Request
 				Str("memberUserId", memberUserId).
 				Str("userId", user.Id.String()).
 				Msg("Failed to delete workspace member")
-			util.WriteJSON(w, http.StatusInternalServerError, map[string]any{
+			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_delete_workspace_member"),
 			})
 		}
