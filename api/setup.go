@@ -57,7 +57,8 @@ func (a *API) SetupAction(w http.ResponseWriter, r *http.Request) {
 
 // SetupStatusAction returns whether the platform is already installed.
 func (a *API) SetupStatusAction(w http.ResponseWriter, _ *http.Request) {
-	log.Info().Msg("Setup status request")
+	log.Info().
+		Msg("Setup status request")
 
 	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"installed": a.Setup.IsInstalled(),

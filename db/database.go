@@ -76,7 +76,8 @@ func NewConnection(config DatabaseConfig) (*Connection, error) {
 
 // Close closes the database connection
 func (c *Connection) Close() error {
-	log.Info().Msg("Closing database connection")
+	log.Info().
+		Msg("Closing database connection")
 	return c.DB.Close()
 }
 

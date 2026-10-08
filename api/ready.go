@@ -13,7 +13,8 @@ import (
 
 // ReadyAction returns whether the app is ready (e.g. DB reachable).
 func (a *API) ReadyAction(w http.ResponseWriter, _ *http.Request) {
-	log.Debug().Msg("Readiness check")
+	log.Debug().
+		Msg("Readiness check")
 
 	err := db.GetDB().Ping()
 	if err != nil {
@@ -27,7 +28,8 @@ func (a *API) ReadyAction(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	log.Debug().Msg("Readiness check passed")
+	log.Debug().
+		Msg("Readiness check passed")
 
 	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"status": "ok",

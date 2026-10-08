@@ -52,7 +52,10 @@ func (a *API) CreateAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_access_key_permissions"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to create workspace access key")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to create workspace access key")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_create_access_key"),
 			})
@@ -87,7 +90,10 @@ func (a *API) ListAccessKeysAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list workspace access keys")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to list workspace access keys")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_list_access_keys"),
 			})
@@ -135,7 +141,10 @@ func (a *API) GetAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "access_key_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("accessKeyId", keyId).Msg("Failed to get workspace access key")
+			log.Error().
+				Err(err).
+				Str("accessKeyId", keyId).
+				Msg("Failed to get workspace access key")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_access_key"),
 			})
@@ -176,7 +185,10 @@ func (a *API) DeleteAccessKeyAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "access_key_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("accessKeyId", keyId).Msg("Failed to delete workspace access key")
+			log.Error().
+				Err(err).
+				Str("accessKeyId", keyId).
+				Msg("Failed to delete workspace access key")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_delete_access_key"),
 			})

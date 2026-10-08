@@ -36,7 +36,10 @@ func (a *API) ListAgentsAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list agents")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to list agents")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_agent_request"),
 			})
@@ -88,7 +91,11 @@ func (a *API) GetAgentAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_agent_name"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("agent", agentName).Msg("Failed to get agent")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("agent", agentName).
+				Msg("Failed to get agent")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_agent_request"),
 			})
@@ -149,7 +156,11 @@ func (a *API) UpsertAgentAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_agent_version"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("agent", agentName).Msg("Failed to upsert agent")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("agent", agentName).
+				Msg("Failed to upsert agent")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_agent_request"),
 			})
@@ -203,7 +214,11 @@ func (a *API) DeleteAgentAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_agent_name"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("agent", agentName).Msg("Failed to delete agent")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("agent", agentName).
+				Msg("Failed to delete agent")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_agent_request"),
 			})

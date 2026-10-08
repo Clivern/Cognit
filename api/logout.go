@@ -19,7 +19,8 @@ func (a *API) LogoutAction(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
-		log.Info().Msg("New logout request")
+		log.Info().
+			Msg("New logout request")
 		a.WriteJSON(w, http.StatusOK, map[string]any{
 			"successMessage": locale.TR(r, "logout_successful"),
 		})

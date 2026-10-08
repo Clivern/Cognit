@@ -40,7 +40,9 @@ func (a *API) GetBillingStatusAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_subscription_not_found"),
 			})
 		default:
-			log.Error().Err(err).Msg("Failed to get billing status")
+			log.Error().
+				Err(err).
+				Msg("Failed to get billing status")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_billing_status"),
 			})
@@ -73,7 +75,9 @@ func (a *API) GetBillingUsageAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_subscription_not_found"),
 			})
 		default:
-			log.Error().Err(err).Msg("Failed to get billing usage")
+			log.Error().
+				Err(err).
+				Msg("Failed to get billing usage")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_billing_usage"),
 			})
@@ -136,7 +140,9 @@ func (a *API) CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request
 				"errorMessage": locale.TR(r, "stripe_billing_not_configured"),
 			})
 		default:
-			log.Error().Err(err).Msg("Failed to create billing checkout session")
+			log.Error().
+				Err(err).
+				Msg("Failed to create billing checkout session")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_create_billing_checkout_session"),
 			})
@@ -179,7 +185,9 @@ func (a *API) CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) 
 				"errorMessage": locale.TR(r, "stripe_billing_not_configured"),
 			})
 		default:
-			log.Error().Err(err).Msg("Failed to create billing portal session")
+			log.Error().
+				Err(err).
+				Msg("Failed to create billing portal session")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_create_billing_portal_session"),
 			})
@@ -194,7 +202,9 @@ func (a *API) CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) 
 func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 	payload, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
 	if err != nil {
-		log.Warn().Err(err).Msg("Stripe webhook rejected: failed to read payload")
+		log.Warn().
+			Err(err).
+			Msg("Stripe webhook rejected: failed to read payload")
 		a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 			"errorMessage": locale.TR(r, "invalid_webhook_payload"),
 		})
@@ -211,12 +221,16 @@ func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, stripe.ErrBillingDisabled), errors.Is(err, stripe.ErrWebhookNotConfigured):
-			log.Warn().Err(err).Msg("Stripe webhook rejected: billing not configured")
+			log.Warn().
+				Err(err).
+				Msg("Stripe webhook rejected: billing not configured")
 			a.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
 				"errorMessage": locale.TR(r, "stripe_billing_not_configured"),
 			})
 		default:
-			log.Error().Err(err).Msg("Failed to handle Stripe webhook")
+			log.Error().
+				Err(err).
+				Msg("Failed to handle Stripe webhook")
 			a.WriteJSON(w, http.StatusBadRequest, map[string]any{
 				"errorMessage": locale.TR(r, "invalid_stripe_webhook"),
 			})
@@ -224,7 +238,8 @@ func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info().Msg("Stripe webhook handled")
+	log.Info().
+		Msg("Stripe webhook handled")
 
 	a.WriteJSON(w, http.StatusOK, module.BillingWebhookResponse{
 		Received: true,

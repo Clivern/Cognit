@@ -37,7 +37,9 @@ func (a *API) GetMeAction(w http.ResponseWriter, r *http.Request) {
 					"errorMessage": locale.TR(r, "invalid_api_key"),
 				})
 			default:
-				log.Error().Err(err).Msg("Failed to resolve API key for /me")
+				log.Error().
+					Err(err).
+					Msg("Failed to resolve API key for /me")
 				a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 					"errorMessage": locale.TR(r, "failed_get_me"),
 				})
@@ -58,7 +60,9 @@ func (a *API) GetMeAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_access_key"),
 			})
 		default:
-			log.Error().Err(err).Msg("Failed to resolve access key for /me")
+			log.Error().
+				Err(err).
+				Msg("Failed to resolve access key for /me")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_me"),
 			})

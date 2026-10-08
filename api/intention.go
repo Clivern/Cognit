@@ -36,7 +36,10 @@ func (a *API) ListIntentionsAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list intentions")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to list intentions")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
@@ -84,7 +87,11 @@ func (a *API) GetIntentionAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "intention_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("intentionId", intentionId).Msg("Failed to get intention")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("intentionId", intentionId).
+				Msg("Failed to get intention")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
@@ -131,7 +138,10 @@ func (a *API) CreateIntentionAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_intention_action"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to create intention")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to create intention")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
@@ -189,7 +199,11 @@ func (a *API) UpdateIntentionAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_intention_action"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("intentionId", intentionId).Msg("Failed to update intention")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("intentionId", intentionId).
+				Msg("Failed to update intention")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
@@ -235,7 +249,11 @@ func (a *API) DeleteIntentionAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "intention_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("intentionId", intentionId).Msg("Failed to delete intention")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("intentionId", intentionId).
+				Msg("Failed to delete intention")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})
@@ -271,7 +289,10 @@ func (a *API) CheckIntentionAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to check intention")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to check intention")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_intention_request"),
 			})

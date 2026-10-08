@@ -39,7 +39,10 @@ func (a *API) ListKeyValueAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list workspace keys")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to list workspace keys")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})
@@ -89,7 +92,11 @@ func (a *API) GetKeyValueAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("key", key).Msg("Failed to get workspace key")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("key", key).
+				Msg("Failed to get workspace key")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})
@@ -146,7 +153,11 @@ func (a *API) PutKeyValueAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_expires_at_format"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("key", key).Msg("Failed to write workspace key")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("key", key).
+				Msg("Failed to write workspace key")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})
@@ -196,7 +207,11 @@ func (a *API) DeleteKeyValueAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_kv_key"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("key", key).Msg("Failed to delete workspace key")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("key", key).
+				Msg("Failed to delete workspace key")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_kv_request"),
 			})

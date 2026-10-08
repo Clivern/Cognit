@@ -95,7 +95,9 @@ func (a *API) ListInvitesAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info().Str("workspaceId", workspaceId).Msg("Listing invites")
+	log.Info().
+		Str("workspaceId", workspaceId).
+		Msg("Listing invites")
 
 	limit, offset := a.ParsePagination(r)
 
@@ -107,7 +109,10 @@ func (a *API) ListInvitesAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", workspaceId).Msg("Failed to list invites")
+			log.Error().
+				Err(err).
+				Str("workspaceId", workspaceId).
+				Msg("Failed to list invites")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_list_invites"),
 			})
@@ -212,7 +217,8 @@ func (a *API) DeleteInviteAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invite_not_found"),
 			})
 		default:
-			log.Error().Err(err).
+			log.Error().
+				Err(err).
 				Str("inviteId", inviteId).
 				Str("workspaceId", workspaceId).
 				Msg("Failed to delete invite")

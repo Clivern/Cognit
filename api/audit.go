@@ -37,7 +37,10 @@ func (a *API) ListWorkspaceAuditsAction(w http.ResponseWriter, r *http.Request) 
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list audit events")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to list audit events")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_list_audits"),
 			})
@@ -86,7 +89,10 @@ func (a *API) GetWorkspaceAuditAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "audit_event_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("auditId", auditId).Msg("Failed to get audit event")
+			log.Error().
+				Err(err).
+				Str("auditId", auditId).
+				Msg("Failed to get audit event")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_get_audit"),
 			})

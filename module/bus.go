@@ -41,7 +41,9 @@ func GetBus() *broker.Client {
 func StopBus() {
 	err := bus.Conn().Drain()
 	if err != nil {
-		log.Error().Err(err).Msg("Error draining NATS bus")
+		log.Error().
+			Err(err).
+			Msg("Error draining NATS bus")
 		bus.Close()
 		return
 	}

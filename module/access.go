@@ -144,7 +144,9 @@ func (a *Access) ListAccessKeys(workspaceId db.Id, limit, offset int) (*ListAcce
 	}
 
 	if _, err := a.AccessKeyRepository.DeleteExpired(); err != nil {
-		log.Error().Err(err).Msg("Failed to delete expired workspace access keys")
+		log.Error().
+			Err(err).
+			Msg("Failed to delete expired workspace access keys")
 	}
 
 	total, err := a.AccessKeyRepository.CountByWorkspaceId(workspaceId)
@@ -194,7 +196,9 @@ func (a *Access) GetAccessKey(workspaceId, id db.Id) (*AccessKeyResponse, error)
 	}
 
 	if _, err := a.AccessKeyRepository.DeleteExpired(); err != nil {
-		log.Error().Err(err).Msg("Failed to delete expired workspace access keys")
+		log.Error().
+			Err(err).
+			Msg("Failed to delete expired workspace access keys")
 	}
 
 	item, err := a.AccessKeyRepository.GetById(id)

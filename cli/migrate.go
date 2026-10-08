@@ -59,7 +59,8 @@ var migrateUpCmd = &cobra.Command{
 				Msg("Failed to run migrations")
 		}
 
-		log.Info().Msg("Migration completed successfully")
+		log.Info().
+			Msg("Migration completed successfully")
 	},
 }
 
@@ -104,7 +105,8 @@ var migrateDownCmd = &cobra.Command{
 				Msg("Failed to roll back migration")
 		}
 
-		log.Info().Msg("Rollback completed successfully")
+		log.Info().
+			Msg("Rollback completed successfully")
 	},
 }
 

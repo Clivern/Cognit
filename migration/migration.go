@@ -157,7 +157,8 @@ func (m *Manager) Up() error {
 	}
 
 	if appliedCount == 0 {
-		log.Info().Msg("No pending migrations to apply")
+		log.Info().
+			Msg("No pending migrations to apply")
 	} else {
 		log.Info().
 			Int("count", appliedCount).
@@ -183,7 +184,8 @@ func (m *Manager) Down() error {
 	`).Scan(&version, &description)
 
 	if err == sql.ErrNoRows {
-		log.Info().Msg("No migrations to roll back")
+		log.Info().
+			Msg("No migrations to roll back")
 		return nil
 	}
 	if err != nil {
@@ -250,8 +252,10 @@ func (m *Manager) Status() error {
 		return m.migrations[i].Version < m.migrations[j].Version
 	})
 
-	log.Info().Msg("Migration Status:")
-	log.Info().Msg("==================")
+	log.Info().
+		Msg("Migration Status:")
+	log.Info().
+		Msg("==================")
 
 	for _, migration := range m.migrations {
 		applied, err := m.isApplied(migration.Version)

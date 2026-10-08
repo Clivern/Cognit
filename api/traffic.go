@@ -36,7 +36,10 @@ func (a *API) ListTrafficAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "workspace_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Msg("Failed to list traffic")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Msg("Failed to list traffic")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_traffic_request"),
 			})
@@ -84,7 +87,11 @@ func (a *API) GetTrafficAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "traffic_not_found"),
 			})
 		default:
-			log.Error().Err(err).Str("workspaceId", wid).Str("trafficId", trafficId).Msg("Failed to get traffic")
+			log.Error().
+				Err(err).
+				Str("workspaceId", wid).
+				Str("trafficId", trafficId).
+				Msg("Failed to get traffic")
 			a.WriteJSON(w, http.StatusInternalServerError, map[string]any{
 				"errorMessage": locale.TR(r, "failed_traffic_request"),
 			})

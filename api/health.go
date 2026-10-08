@@ -11,7 +11,8 @@ import (
 
 // HealthAction returns a simple health check (status ok).
 func (a *API) HealthAction(w http.ResponseWriter, _ *http.Request) {
-	log.Debug().Msg("Health check")
+	log.Debug().
+		Msg("Health check")
 
 	a.WriteJSON(w, http.StatusOK, map[string]any{
 		"status": "ok",

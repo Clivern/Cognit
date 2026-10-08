@@ -273,7 +273,8 @@ func RunServer(Static embed.FS) error {
 			return fmt.Errorf("server forced to shutdown: %w", err)
 		}
 
-		log.Info().Msg("Server shutdown complete")
+		log.Info().
+			Msg("Server shutdown complete")
 	}
 
 	return nil

@@ -87,7 +87,8 @@ func RunWorker() error {
 		}
 	}
 
-	log.Info().Msg("Worker shutdown complete")
+	log.Info().
+		Msg("Worker shutdown complete")
 
 	return nil
 }

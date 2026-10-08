@@ -34,7 +34,8 @@ func InitDB(rwConfig DatabaseConfig, roConfigs ...DatabaseConfig) error {
 	defer mu.Unlock()
 
 	if rwConn != nil {
-		log.Warn().Msg("Database connection already initialized")
+		log.Warn().
+			Msg("Database connection already initialized")
 		return nil
 	}
 

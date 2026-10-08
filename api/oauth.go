@@ -24,7 +24,9 @@ const OauthStateCookie = "_cognit_oauth_state"
 func (a *API) GitHubOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 	state, err := util.GenerateSecureToken(24)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate oauth state")
+		log.Error().
+			Err(err).
+			Msg("Failed to generate oauth state")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
@@ -53,21 +55,27 @@ func (a *API) GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) 
 
 	token, err := a.GitHubOAuth.Exchange(r.Context(), code, state, expectedState)
 	if err != nil {
-		log.Error().Err(err).Msg("GitHub oauth exchange failed")
+		log.Error().
+			Err(err).
+			Msg("GitHub oauth exchange failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
 	user, err := a.GitHubOAuth.User(r.Context(), token.AccessToken)
 	if err != nil {
-		log.Error().Err(err).Msg("GitHub oauth user fetch failed")
+		log.Error().
+			Err(err).
+			Msg("GitHub oauth user fetch failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
 
 	emails, err := a.GitHubOAuth.Emails(r.Context(), token.AccessToken)
 	if err != nil {
-		log.Error().Err(err).Msg("GitHub oauth emails fetch failed")
+		log.Error().
+			Err(err).
+			Msg("GitHub oauth emails fetch failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
@@ -83,7 +91,9 @@ func (a *API) GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) 
 		),
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("GitHub oauth login failed")
+		log.Error().
+			Err(err).
+			Msg("GitHub oauth login failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=github"), http.StatusFound)
 		return
 	}
@@ -105,7 +115,9 @@ func (a *API) GitHubOAuthCallbackAction(w http.ResponseWriter, r *http.Request) 
 func (a *API) GoogleOAuthStartAction(w http.ResponseWriter, r *http.Request) {
 	state, err := util.GenerateSecureToken(24)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate oauth state")
+		log.Error().
+			Err(err).
+			Msg("Failed to generate oauth state")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
 		return
 	}
@@ -134,14 +146,18 @@ func (a *API) GoogleOAuthCallbackAction(w http.ResponseWriter, r *http.Request) 
 
 	token, err := a.GoogleOAuth.Exchange(r.Context(), code, state, expectedState)
 	if err != nil {
-		log.Error().Err(err).Msg("Google oauth exchange failed")
+		log.Error().
+			Err(err).
+			Msg("Google oauth exchange failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
 		return
 	}
 
 	user, err := a.GoogleOAuth.User(r.Context(), token.AccessToken)
 	if err != nil {
-		log.Error().Err(err).Msg("Google oauth user fetch failed")
+		log.Error().
+			Err(err).
+			Msg("Google oauth user fetch failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
 		return
 	}
@@ -157,7 +173,9 @@ func (a *API) GoogleOAuthCallbackAction(w http.ResponseWriter, r *http.Request) 
 		),
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("Google oauth login failed")
+		log.Error().
+			Err(err).
+			Msg("Google oauth login failed")
 		http.Redirect(w, r, util.AppURL("/login?oauth_error=google"), http.StatusFound)
 		return
 	}
