@@ -1,0 +1,478 @@
+// Copyright 2026 Cognit. All rights reserved.
+// License can be found in the LICENSE file.
+
+package module
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/clivern/cognit/db"
+)
+
+var (
+	ErrCheckNotFound        = errors.New("check not found")
+	ErrInvalidCheckId       = errors.New("invalid check id")
+	ErrReservedCheckId      = errors.New("reserved check id")
+	ErrUnsupportedCheckType = errors.New("unsupported check type")
+	ErrInvalidCheckPath     = errors.New("invalid check path")
+	ErrInvalidCheckScheme   = errors.New("invalid check scheme")
+	ErrInvalidCheckTiming   = errors.New("invalid check timing")
+	ErrInvalidCheckStatus   = errors.New("invalid check status")
+	ErrCheckNotReportable   = errors.New("check not reportable")
+	ErrFailedListChecks     = errors.New("failed list checks")
+	ErrFailedUpsertCheck    = errors.New("failed upsert check")
+	ErrFailedDeleteCheck    = errors.New("failed delete check")
+	ErrFailedReportCheck    = errors.New("failed report check")
+)
+
+const (
+	// DefaultCheckInterval is how often http and tcp checks run, in seconds.
+	DefaultCheckInterval = 10
+	// DefaultCheckTimeout is how long an http or tcp probe may take, in seconds.
+	DefaultCheckTimeout = 2
+	// MaxCheckOutput caps the output stored for a check.
+	MaxCheckOutput = 4096
+)
+
+// CheckDefinition is the stored definition of a check template and its instance copies.
+type CheckDefinition struct {
+	Path     string `json:"path,omitempty"`
+	Scheme   string `json:"scheme,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	Interval int    `json:"interval,omitempty"`
+	Timeout  int    `json:"timeout,omitempty"`
+	TTL      int    `json:"ttl,omitempty"`
+}
+
+// UpsertAgentCheckRequest is the body for creating or replacing an agent check template.
+type UpsertAgentCheckRequest struct {
+	Name     string `json:"name" validate:"omitempty,max=120" label:"Name"`
+	Type     string `json:"type" validate:"required,oneof=ttl http tcp" label:"Type"`
+	Path     string `json:"path" validate:"omitempty,max=255" label:"Path"`
+	Scheme   string `json:"scheme" validate:"omitempty,oneof=http https" label:"Scheme"`
+	Port     int    `json:"port" validate:"omitempty,min=1,max=65535" label:"Port"`
+	Interval int    `json:"interval" validate:"omitempty,min=5,max=3600" label:"Interval"`
+	Timeout  int    `json:"timeout" validate:"omitempty,min=1,max=60" label:"Timeout"`
+	TTL      int    `json:"ttl" validate:"omitempty,min=5,max=86400" label:"TTL"`
+}
+
+// ReportCheckRequest is the body an instance sends to update one of its TTL checks.
+type ReportCheckRequest struct {
+	Output string `json:"output" validate:"omitempty,max=4096" label:"Output"`
+}
+
+// AgentCheckResponse is an agent check template shaped for API responses.
+type AgentCheckResponse struct {
+	CheckId   string `json:"checkId"`
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	Path      string `json:"path,omitempty"`
+	Scheme    string `json:"scheme,omitempty"`
+	Port      int    `json:"port,omitempty"`
+	Interval  int    `json:"interval,omitempty"`
+	Timeout   int    `json:"timeout,omitempty"`
+	TTL       int    `json:"ttl,omitempty"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
+// ListAgentChecksResponse is returned when listing the check templates of an agent.
+type ListAgentChecksResponse struct {
+	Checks []*AgentCheckResponse
+	Total  int64
+}
+
+// Check is the module for agent check templates and instance check reports.
+type Check struct {
+	AgentRepository       db.AgentRepository
+	AgentCheckRepository  db.AgentCheckRepository
+	InstanceRepository    db.AgentInstanceRepository
+	HealthCheckRepository db.HealthCheckRepository
+	WorkspaceRepository   db.WorkspaceRepository
+}
+
+// NewCheck creates a check module with the given repositories.
+func NewCheck(agents db.AgentRepository, agentChecks db.AgentCheckRepository, instances db.AgentInstanceRepository, checks db.HealthCheckRepository, workspaces db.WorkspaceRepository) *Check {
+	return &Check{
+		AgentRepository:       agents,
+		AgentCheckRepository:  agentChecks,
+		InstanceRepository:    instances,
+		HealthCheckRepository: checks,
+		WorkspaceRepository:   workspaces,
+	}
+}
+
+// ListAgentChecks returns one page of the check templates of an agent.
+func (c *Check) ListAgentChecks(workspaceId db.Id, agentName string, limit, offset int) (*ListAgentChecksResponse, error) {
+	if !agentNamePattern.MatchString(agentName) {
+		return nil, ErrInvalidAgentName
+	}
+
+	workspace, err := c.WorkspaceRepository.GetById(workspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if workspace == nil {
+		return nil, ErrWorkspaceNotFound
+	}
+
+	agent, err := c.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedListChecks, err)
+	}
+	if agent == nil {
+		return nil, ErrAgentNotFound
+	}
+
+	total, err := c.AgentCheckRepository.CountByAgentId(agent.Id)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedListChecks, err)
+	}
+
+	templates, err := c.AgentCheckRepository.ListPageByAgentId(agent.Id, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedListChecks, err)
+	}
+
+	list := make([]*AgentCheckResponse, 0, len(templates))
+	for _, template := range templates {
+		var definition CheckDefinition
+		_ = json.Unmarshal([]byte(template.Definition), &definition)
+
+		list = append(list, &AgentCheckResponse{
+			CheckId:   template.CheckId,
+			Name:      template.Name,
+			Type:      template.Type,
+			Path:      definition.Path,
+			Scheme:    definition.Scheme,
+			Port:      definition.Port,
+			Interval:  definition.Interval,
+			Timeout:   definition.Timeout,
+			TTL:       definition.TTL,
+			CreatedAt: template.CreatedAt.UTC().Format(time.RFC3339),
+			UpdatedAt: template.UpdatedAt.UTC().Format(time.RFC3339),
+		})
+	}
+
+	return &ListAgentChecksResponse{
+		Checks: list,
+		Total:  total,
+	}, nil
+}
+
+// UpsertAgentCheck creates or replaces a check template and applies it to every instance.
+func (c *Check) UpsertAgentCheck(workspaceId db.Id, agentName, checkId string, req *UpsertAgentCheckRequest) (*AgentCheckResponse, bool, error) {
+	if !instanceIdPattern.MatchString(checkId) {
+		return nil, false, ErrInvalidCheckId
+	}
+	if checkId == db.HealthCheckIDTTL {
+		return nil, false, ErrReservedCheckId
+	}
+
+	var definition CheckDefinition
+	switch req.Type {
+	case db.HealthCheckTypeTTL:
+		if req.TTL == 0 {
+			return nil, false, ErrInvalidCheckTiming
+		}
+
+		definition.TTL = req.TTL
+
+	case db.HealthCheckTypeHTTP, db.HealthCheckTypeTCP:
+		definition.Port = req.Port
+		definition.Interval = req.Interval
+		definition.Timeout = req.Timeout
+		if definition.Interval == 0 {
+			definition.Interval = DefaultCheckInterval
+		}
+		if definition.Timeout == 0 {
+			definition.Timeout = DefaultCheckTimeout
+		}
+		if definition.Timeout >= definition.Interval {
+			return nil, false, ErrInvalidCheckTiming
+		}
+
+		if req.Type == db.HealthCheckTypeHTTP {
+			if !strings.HasPrefix(req.Path, "/") || strings.ContainsAny(req.Path, " \t\r\n") {
+				return nil, false, ErrInvalidCheckPath
+			}
+
+			definition.Path = req.Path
+			definition.Scheme = req.Scheme
+			if definition.Scheme == "" {
+				definition.Scheme = "http"
+			}
+			if definition.Scheme != "http" && definition.Scheme != "https" {
+				return nil, false, ErrInvalidCheckScheme
+			}
+		}
+
+	default:
+		return nil, false, ErrUnsupportedCheckType
+	}
+
+	raw, _ := json.Marshal(definition)
+
+	if !agentNamePattern.MatchString(agentName) {
+		return nil, false, ErrInvalidAgentName
+	}
+
+	workspace, err := c.WorkspaceRepository.GetById(workspaceId)
+	if err != nil {
+		return nil, false, err
+	}
+	if workspace == nil {
+		return nil, false, ErrWorkspaceNotFound
+	}
+
+	agent, err := c.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
+	if err != nil {
+		return nil, false, fmt.Errorf("%w: %v", ErrFailedUpsertCheck, err)
+	}
+	if agent == nil {
+		return nil, false, ErrAgentNotFound
+	}
+
+	template, err := c.AgentCheckRepository.GetByAgentAndCheckId(agent.Id, checkId)
+	if err != nil {
+		return nil, false, fmt.Errorf("%w: %v", ErrFailedUpsertCheck, err)
+	}
+
+	created := template == nil
+	if created {
+		template = &db.AgentCheck{AgentId: agent.Id, CheckId: checkId}
+	}
+
+	template.Name = strings.TrimSpace(req.Name)
+	if template.Name == "" {
+		template.Name = checkId
+	}
+
+	template.Type = req.Type
+	template.Definition = string(raw)
+
+	if created {
+		err = c.AgentCheckRepository.Create(template)
+	} else {
+		err = c.AgentCheckRepository.Update(template)
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("%w: %v", ErrFailedUpsertCheck, err)
+	}
+
+	instances, err := c.InstanceRepository.ListByAgentId(agent.Id)
+	if err != nil {
+		return nil, false, fmt.Errorf("%w: %v", ErrFailedUpsertCheck, err)
+	}
+
+	// Copy the template onto every instance. Pull checks run right away and a
+	// TTL check gets one TTL window for its first report.
+	now := time.Now().UTC()
+	isPull := template.Type == db.HealthCheckTypeHTTP || template.Type == db.HealthCheckTypeTCP
+	for _, instance := range instances {
+		existing, err := c.HealthCheckRepository.GetByInstanceAndCheckId(instance.Id, template.CheckId)
+		if err != nil {
+			return nil, false, fmt.Errorf("%w: %v", ErrFailedUpsertCheck, err)
+		}
+		if existing != nil && existing.Source == db.HealthCheckSourceLease {
+			continue
+		}
+
+		// A type change resets the check, since its old status no longer means anything.
+		if existing != nil && existing.Type != template.Type {
+			err = c.HealthCheckRepository.Delete(existing.Id)
+			if err != nil {
+				return nil, false, fmt.Errorf("%w: %v", ErrFailedUpsertCheck, err)
+			}
+
+			existing = nil
+		}
+
+		stored := template.Definition
+		if existing != nil {
+			existing.Name = template.Name
+			existing.Definition = &stored
+			existing.NextRunAt = nil
+			if isPull {
+				existing.NextRunAt = &now
+			}
+
+			err = c.HealthCheckRepository.Update(existing)
+		} else {
+			check := &db.HealthCheck{
+				AgentInstanceId: instance.Id,
+				CheckId:         template.CheckId,
+				Name:            template.Name,
+				Type:            template.Type,
+				Source:          db.HealthCheckSourceAgent,
+				Status:          db.HealthCheckStatusCritical,
+				Definition:      &stored,
+			}
+			if isPull {
+				output := "Waiting for the first check"
+				check.Output = &output
+				check.NextRunAt = &now
+			} else {
+				output := "Waiting for the first report"
+				expiresAt := now.Add(time.Duration(definition.TTL) * time.Second)
+				check.Status = db.HealthCheckStatusPassing
+				check.Output = &output
+				check.TTLExpiresAt = &expiresAt
+			}
+
+			err = c.HealthCheckRepository.Create(check)
+		}
+		if err != nil {
+			return nil, false, fmt.Errorf("%w: %v", ErrFailedUpsertCheck, err)
+		}
+	}
+
+	return &AgentCheckResponse{
+		CheckId:   template.CheckId,
+		Name:      template.Name,
+		Type:      template.Type,
+		Path:      definition.Path,
+		Scheme:    definition.Scheme,
+		Port:      definition.Port,
+		Interval:  definition.Interval,
+		Timeout:   definition.Timeout,
+		TTL:       definition.TTL,
+		CreatedAt: template.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: template.UpdatedAt.UTC().Format(time.RFC3339),
+	}, created, nil
+}
+
+// DeleteAgentCheck removes an agent check template and its copies on every instance.
+func (c *Check) DeleteAgentCheck(workspaceId db.Id, agentName, checkId string) error {
+	if !instanceIdPattern.MatchString(checkId) {
+		return ErrInvalidCheckId
+	}
+
+	if !agentNamePattern.MatchString(agentName) {
+		return ErrInvalidAgentName
+	}
+
+	workspace, err := c.WorkspaceRepository.GetById(workspaceId)
+	if err != nil {
+		return err
+	}
+	if workspace == nil {
+		return ErrWorkspaceNotFound
+	}
+
+	agent, err := c.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrFailedDeleteCheck, err)
+	}
+	if agent == nil {
+		return ErrAgentNotFound
+	}
+
+	template, err := c.AgentCheckRepository.GetByAgentAndCheckId(agent.Id, checkId)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrFailedDeleteCheck, err)
+	}
+	if template == nil {
+		return ErrCheckNotFound
+	}
+
+	err = c.HealthCheckRepository.DeleteByAgentAndCheckId(agent.Id, checkId)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrFailedDeleteCheck, err)
+	}
+
+	err = c.AgentCheckRepository.Delete(template.Id)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrFailedDeleteCheck, err)
+	}
+
+	return nil
+}
+
+// ReportCheck records an instance's report for one of its TTL checks and restarts the TTL.
+func (c *Check) ReportCheck(workspaceId db.Id, agentName, instanceId, checkId, status string, req *ReportCheckRequest) (*HealthCheckResponse, error) {
+	if !instanceIdPattern.MatchString(instanceId) {
+		return nil, ErrInvalidInstanceId
+	}
+	if !instanceIdPattern.MatchString(checkId) {
+		return nil, ErrInvalidCheckId
+	}
+	if status != db.HealthCheckStatusPassing && status != db.HealthCheckStatusWarning && status != db.HealthCheckStatusCritical {
+		return nil, ErrInvalidCheckStatus
+	}
+
+	if !agentNamePattern.MatchString(agentName) {
+		return nil, ErrInvalidAgentName
+	}
+
+	workspace, err := c.WorkspaceRepository.GetById(workspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if workspace == nil {
+		return nil, ErrWorkspaceNotFound
+	}
+
+	agent, err := c.AgentRepository.GetByWorkspaceAndName(workspaceId, agentName)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedReportCheck, err)
+	}
+	if agent == nil {
+		return nil, ErrAgentNotFound
+	}
+
+	instance, err := c.InstanceRepository.GetByAgentAndInstanceId(agent.Id, instanceId)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedReportCheck, err)
+	}
+	if instance == nil {
+		return nil, ErrInstanceNotFound
+	}
+
+	check, err := c.HealthCheckRepository.GetByInstanceAndCheckId(instance.Id, checkId)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedReportCheck, err)
+	}
+	if check == nil {
+		return nil, ErrCheckNotFound
+	}
+	if check.Type != db.HealthCheckTypeTTL || check.Source == db.HealthCheckSourceLease {
+		return nil, ErrCheckNotReportable
+	}
+
+	var definition CheckDefinition
+	if check.Definition != nil {
+		_ = json.Unmarshal([]byte(*check.Definition), &definition)
+	}
+
+	now := time.Now().UTC()
+	expiresAt := now.Add(time.Duration(definition.TTL) * time.Second)
+	output := req.Output
+	if len(output) > MaxCheckOutput {
+		output = output[:MaxCheckOutput]
+	}
+
+	err = c.HealthCheckRepository.Report(check.Id, status, output, &expiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedReportCheck, err)
+	}
+
+	response := &HealthCheckResponse{
+		CheckId:      check.CheckId,
+		Name:         check.Name,
+		Type:         check.Type,
+		Source:       check.Source,
+		Status:       status,
+		TTLExpiresAt: &expiresAt,
+		LastRunAt:    &now,
+	}
+	if output != "" {
+		response.Output = &output
+	}
+
+	return response, nil
+}

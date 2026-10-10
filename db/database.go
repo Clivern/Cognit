@@ -78,10 +78,11 @@ func NewConnection(config DatabaseConfig) (*Connection, error) {
 func (c *Connection) Close() error {
 	log.Info().
 		Msg("Closing database connection")
+
 	return c.DB.Close()
 }
 
-// Ping checks if the database connection is alive
+// Ping checks if the database connection is alive. TODO: remove if not used in future.
 func (c *Connection) Ping() error {
 	return c.DB.Ping()
 }

@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -54,6 +55,7 @@ func (r *SessionRepositoryPostgres) Create(session *Session) error {
 	if err != nil {
 		return err
 	}
+
 	session.Id = id
 
 	_, err = r.db.Exec(
@@ -67,6 +69,7 @@ func (r *SessionRepositoryPostgres) Create(session *Session) error {
 		session.UserAgent,
 		session.ExpiresAt,
 	)
+
 	return err
 }
 
@@ -90,13 +93,14 @@ func (r *SessionRepositoryPostgres) GetByToken(token string) (*Session, error) {
 		&s.CreatedAt,
 		&s.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return s, err
 }
 
-// GetById returns a session by Id
+// GetById returns a session by Id. TODO: remove if not used in future.
 func (r *SessionRepositoryPostgres) GetById(id Id) (*Session, error) {
 	s := &Session{}
 	err := r.db.QueryRow(
@@ -116,9 +120,10 @@ func (r *SessionRepositoryPostgres) GetById(id Id) (*Session, error) {
 		&s.CreatedAt,
 		&s.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return s, err
 }
 
@@ -136,6 +141,7 @@ func (r *SessionRepositoryPostgres) GetByUserId(userId Id) ([]*Session, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var list []*Session
 	for rows.Next() {
@@ -152,8 +158,10 @@ func (r *SessionRepositoryPostgres) GetByUserId(userId Id) ([]*Session, error) {
 		); err != nil {
 			return nil, err
 		}
+
 		list = append(list, s)
 	}
+
 	return list, rows.Err()
 }
 
@@ -163,15 +171,17 @@ func (r *SessionRepositoryPostgres) Delete(id Id) error {
 		`DELETE FROM user_sessions WHERE id = $1`,
 		id.String(),
 	)
+
 	return err
 }
 
-// DeleteByToken removes a session by token
+// DeleteByToken removes a session by token. TODO: remove if not used in future.
 func (r *SessionRepositoryPostgres) DeleteByToken(token string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM user_sessions WHERE token = $1`,
 		token,
 	)
+
 	return err
 }
 
@@ -181,6 +191,7 @@ func (r *SessionRepositoryPostgres) DeleteByUserId(userId Id) error {
 		`DELETE FROM user_sessions WHERE user_id = $1`,
 		userId.String(),
 	)
+
 	return err
 }
 
@@ -194,10 +205,11 @@ func (r *SessionRepositoryPostgres) DeleteExpired() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return result.RowsAffected()
 }
 
-// IsValid checks if a session is valid
+// IsValid checks if a session is valid. TODO: remove if not used in future.
 func (r *SessionRepositoryPostgres) IsValid(token string) (bool, error) {
 	session, err := r.GetByToken(token)
 	if err != nil {
@@ -206,10 +218,11 @@ func (r *SessionRepositoryPostgres) IsValid(token string) (bool, error) {
 	if session == nil {
 		return false, nil
 	}
+
 	return session.ExpiresAt.After(time.Now().UTC()), nil
 }
 
-// UpdateExpiration updates the expiration time of a session
+// UpdateExpiration updates the expiration time of a session. TODO: remove if not used in future.
 func (r *SessionRepositoryPostgres) UpdateExpiration(id Id, expiresAt time.Time) error {
 	_, err := r.db.Exec(
 		`UPDATE user_sessions
@@ -219,6 +232,7 @@ func (r *SessionRepositoryPostgres) UpdateExpiration(id Id, expiresAt time.Time)
 		WHERE id = $3`,
 		expiresAt, time.Now().UTC(), id.String(),
 	)
+
 	return err
 }
 
@@ -231,10 +245,11 @@ func (r *SessionRepositoryPostgres) Count() (int64, error) {
 		WHERE expires_at > $1`,
 		time.Now().UTC(),
 	).Scan(&count)
+
 	return count, err
 }
 
-// CountByUserId returns the total number of sessions by user Id
+// CountByUserId returns the total number of sessions by user Id. TODO: remove if not used in future.
 func (r *SessionRepositoryPostgres) CountByUserId(userId Id) (int64, error) {
 	var count int64
 	err := r.db.QueryRow(
@@ -243,5 +258,6 @@ func (r *SessionRepositoryPostgres) CountByUserId(userId Id) (int64, error) {
 		WHERE user_id = $1 AND expires_at > $2`,
 		userId.String(), time.Now().UTC(),
 	).Scan(&count)
+
 	return count, err
 }

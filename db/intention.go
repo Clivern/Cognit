@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -64,8 +65,6 @@ type IntentionMetaRepositoryPostgres struct {
 	db *sql.DB
 }
 
-const intentionColumns = `id, workspace_id, source_agent, destination_agent, skill, action, created_at, updated_at`
-
 // NewIntentionRepository returns the repository for intentions.
 func NewIntentionRepository(db *sql.DB) IntentionRepository {
 	return &IntentionRepositoryPostgres{db: db}
@@ -77,6 +76,7 @@ func (r *IntentionRepositoryPostgres) Create(intention *Intention) error {
 	if err != nil {
 		return err
 	}
+
 	intention.Id = id
 
 	return r.db.QueryRow(
@@ -96,14 +96,24 @@ func (r *IntentionRepositoryPostgres) Create(intention *Intention) error {
 func (r *IntentionRepositoryPostgres) GetById(id Id) (*Intention, error) {
 	intention := &Intention{}
 	err := r.db.QueryRow(
-		`SELECT `+intentionColumns+`
+		`SELECT id, workspace_id, source_agent, destination_agent, skill, action, created_at, updated_at
 		FROM intentions
 		WHERE id = $1`,
 		id.String(),
-	).Scan(scanIntention(intention)...)
-	if isNotFound(err) {
+	).Scan(
+		&intention.Id,
+		&intention.WorkspaceId,
+		&intention.SourceAgent,
+		&intention.DestinationAgent,
+		&intention.Skill,
+		&intention.Action,
+		&intention.CreatedAt,
+		&intention.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return intention, err
 }
 
@@ -120,19 +130,21 @@ func (r *IntentionRepositoryPostgres) Update(intention *Intention) error {
 		time.Now().UTC(),
 		intention.Id.String(),
 	)
+
 	return err
 }
 
 // Delete removes an intention row.
 func (r *IntentionRepositoryPostgres) Delete(id Id) error {
 	_, err := r.db.Exec(`DELETE FROM intentions WHERE id = $1`, id.String())
+
 	return err
 }
 
 // ListByWorkspaceId lists intentions in a workspace.
 func (r *IntentionRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*Intention, error) {
 	rows, err := r.db.Query(
-		`SELECT `+intentionColumns+`
+		`SELECT id, workspace_id, source_agent, destination_agent, skill, action, created_at, updated_at
 		FROM intentions
 		WHERE workspace_id = $1
 		ORDER BY source_agent, destination_agent, skill
@@ -144,17 +156,29 @@ func (r *IntentionRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, o
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*Intention
 	for rows.Next() {
 		intention := &Intention{}
-		err := rows.Scan(scanIntention(intention)...)
+		err := rows.Scan(
+			&intention.Id,
+			&intention.WorkspaceId,
+			&intention.SourceAgent,
+			&intention.DestinationAgent,
+			&intention.Skill,
+			&intention.Action,
+			&intention.CreatedAt,
+			&intention.UpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, intention)
 	}
+
 	return list, rows.Err()
 }
 
@@ -165,6 +189,7 @@ func (r *IntentionRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64,
 		`SELECT COUNT(*) FROM intentions WHERE workspace_id = $1`,
 		workspaceId.String(),
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -173,7 +198,7 @@ func (r *IntentionRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64,
 func (r *IntentionRepositoryPostgres) Match(workspaceId Id, source, destination, skill string) (*Intention, error) {
 	intention := &Intention{}
 	err := r.db.QueryRow(
-		`SELECT `+intentionColumns+`
+		`SELECT id, workspace_id, source_agent, destination_agent, skill, action, created_at, updated_at
 		FROM intentions
 		WHERE workspace_id = $1
 			AND source_agent = $2
@@ -185,15 +210,7 @@ func (r *IntentionRepositoryPostgres) Match(workspaceId Id, source, destination,
 		source,
 		destination,
 		skill,
-	).Scan(scanIntention(intention)...)
-	if isNotFound(err) {
-		return nil, nil
-	}
-	return intention, err
-}
-
-func scanIntention(intention *Intention) []any {
-	return []any{
+	).Scan(
 		&intention.Id,
 		&intention.WorkspaceId,
 		&intention.SourceAgent,
@@ -202,7 +219,12 @@ func scanIntention(intention *Intention) []any {
 		&intention.Action,
 		&intention.CreatedAt,
 		&intention.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
 	}
+
+	return intention, err
 }
 
 // NewIntentionMetaRepository returns the repository for intention metadata.
@@ -210,12 +232,13 @@ func NewIntentionMetaRepository(db *sql.DB) IntentionMetaRepository {
 	return &IntentionMetaRepositoryPostgres{db: db}
 }
 
-// Create inserts an intention metadata row.
+// Create inserts an intention metadata row. TODO: remove if not used in future.
 func (r *IntentionMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
 	if err != nil {
 		return err
 	}
+
 	_, err = r.db.Exec(
 		`INSERT INTO intentions_meta (id, intention_id, key, value)
 		VALUES ($1, $2, $3, to_jsonb($4::text))`,
@@ -224,10 +247,11 @@ func (r *IntentionMetaRepositoryPostgres) Create(id Id, key, value string) error
 		key,
 		value,
 	)
+
 	return err
 }
 
-// Get returns intention metadata by key.
+// Get returns intention metadata by key. TODO: remove if not used in future.
 func (r *IntentionMetaRepositoryPostgres) Get(id Id, key string) (*IntentionMeta, error) {
 	meta := &IntentionMeta{}
 	err := r.db.QueryRow(
@@ -244,13 +268,14 @@ func (r *IntentionMetaRepositoryPostgres) Get(id Id, key string) (*IntentionMeta
 		&meta.CreatedAt,
 		&meta.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return meta, err
 }
 
-// Update updates an existing intention metadata row.
+// Update updates an existing intention metadata row. TODO: remove if not used in future.
 func (r *IntentionMetaRepositoryPostgres) Update(id Id, key, value string) error {
 	_, err := r.db.Exec(
 		`UPDATE intentions_meta
@@ -261,20 +286,22 @@ func (r *IntentionMetaRepositoryPostgres) Update(id Id, key, value string) error
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// Delete deletes an intention metadata row.
+// Delete deletes an intention metadata row. TODO: remove if not used in future.
 func (r *IntentionMetaRepositoryPostgres) Delete(id Id, key string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM intentions_meta WHERE intention_id = $1 AND key = $2`,
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// ListByIntentionId lists intention metadata rows.
+// ListByIntentionId lists intention metadata rows. TODO: remove if not used in future.
 func (r *IntentionMetaRepositoryPostgres) ListByIntentionId(id Id) ([]*IntentionMeta, error) {
 	rows, err := r.db.Query(
 		`SELECT id, intention_id, key, value #>> '{}', created_at, updated_at
@@ -286,6 +313,7 @@ func (r *IntentionMetaRepositoryPostgres) ListByIntentionId(id Id) ([]*Intention
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*IntentionMeta
@@ -302,12 +330,14 @@ func (r *IntentionMetaRepositoryPostgres) ListByIntentionId(id Id) ([]*Intention
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, meta)
 	}
+
 	return list, rows.Err()
 }
 
-// Upsert creates or updates intention metadata.
+// Upsert creates or updates intention metadata. TODO: remove if not used in future.
 func (r *IntentionMetaRepositoryPostgres) Upsert(id Id, key, value string) error {
 	existing, err := r.Get(id, key)
 	if err != nil {
@@ -316,5 +346,6 @@ func (r *IntentionMetaRepositoryPostgres) Upsert(id Id, key, value string) error
 	if existing == nil {
 		return r.Create(id, key, value)
 	}
+
 	return r.Update(id, key, value)
 }

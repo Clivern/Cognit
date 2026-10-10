@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -69,6 +70,7 @@ func (r *WorkspaceRepositoryPostgres) Create(workspace *Workspace) error {
 	if err != nil {
 		return err
 	}
+
 	workspace.Id = id
 
 	err = r.db.QueryRow(
@@ -82,6 +84,7 @@ func (r *WorkspaceRepositoryPostgres) Create(workspace *Workspace) error {
 		&workspace.CreatedAt,
 		&workspace.UpdatedAt,
 	)
+
 	return err
 }
 
@@ -105,9 +108,10 @@ func (r *WorkspaceRepositoryPostgres) GetById(id Id) (*Workspace, error) {
 		&w.CreatedAt,
 		&w.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return w, err
 }
 
@@ -131,9 +135,10 @@ func (r *WorkspaceRepositoryPostgres) GetByHandle(handle string) (*Workspace, er
 		&w.CreatedAt,
 		&w.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return w, err
 }
 
@@ -149,6 +154,7 @@ func (r *WorkspaceRepositoryPostgres) Update(workspace *Workspace) error {
 		time.Now().UTC(),
 		workspace.Id.String(),
 	)
+
 	return err
 }
 
@@ -158,6 +164,7 @@ func (r *WorkspaceRepositoryPostgres) Delete(id Id) error {
 		`DELETE FROM workspaces WHERE id = $1`,
 		id.String(),
 	)
+
 	return err
 }
 
@@ -182,6 +189,7 @@ func (r *WorkspaceRepositoryPostgres) List(limit, offset int, userId Id) ([]*Wor
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var list []*Workspace
 	for rows.Next() {
@@ -196,8 +204,10 @@ func (r *WorkspaceRepositoryPostgres) List(limit, offset int, userId Id) ([]*Wor
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, w)
 	}
+
 	return list, rows.Err()
 }
 
@@ -211,6 +221,7 @@ func (r *WorkspaceRepositoryPostgres) Count(userId Id) (int64, error) {
 		WHERE wu.user_id = $1`,
 		userId.String(),
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -221,6 +232,7 @@ func (r *WorkspaceRepositoryPostgres) CountAll() (int64, error) {
 		`SELECT COUNT(*)
 		FROM workspaces`,
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -248,9 +260,10 @@ func (r *WorkspaceRepositoryPostgres) GetWorkspaceMembership(workspaceId, userId
 		&m.CreatedAt,
 		&m.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return m, err
 }
 
@@ -259,7 +272,7 @@ func NewWorkspaceMetaRepository(db *sql.DB) WorkspaceMetaRepository {
 	return &WorkspaceMetaRepositoryPostgres{db: db}
 }
 
-// Create inserts a workspace metadata row.
+// Create inserts a workspace metadata row. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
 	if err != nil {
@@ -274,10 +287,11 @@ func (r *WorkspaceMetaRepositoryPostgres) Create(id Id, key, value string) error
 		key,
 		value,
 	)
+
 	return err
 }
 
-// Get returns workspace metadata by key.
+// Get returns workspace metadata by key. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) Get(id Id, key string) (*WorkspaceMeta, error) {
 	meta := &WorkspaceMeta{}
 	err := r.db.QueryRow(
@@ -294,13 +308,14 @@ func (r *WorkspaceMetaRepositoryPostgres) Get(id Id, key string) (*WorkspaceMeta
 		&meta.CreatedAt,
 		&meta.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return meta, err
 }
 
-// Update updates an existing workspace metadata row.
+// Update updates an existing workspace metadata row. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) Update(id Id, key, value string) error {
 	_, err := r.db.Exec(
 		`UPDATE workspaces_meta
@@ -311,10 +326,11 @@ func (r *WorkspaceMetaRepositoryPostgres) Update(id Id, key, value string) error
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// Delete deletes a workspace metadata row.
+// Delete deletes a workspace metadata row. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) Delete(id Id, key string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM workspaces_meta
@@ -322,10 +338,11 @@ func (r *WorkspaceMetaRepositoryPostgres) Delete(id Id, key string) error {
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// ListByWorkspaceId lists workspace metadata rows by workspace id.
+// ListByWorkspaceId lists workspace metadata rows by workspace id. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) ListByWorkspaceId(id Id) ([]*WorkspaceMeta, error) {
 	rows, err := r.db.Query(
 		`SELECT id, workspace_id, key, value, created_at, updated_at
@@ -337,6 +354,7 @@ func (r *WorkspaceMetaRepositoryPostgres) ListByWorkspaceId(id Id) ([]*Workspace
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*WorkspaceMeta
@@ -353,12 +371,14 @@ func (r *WorkspaceMetaRepositoryPostgres) ListByWorkspaceId(id Id) ([]*Workspace
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, meta)
 	}
+
 	return list, rows.Err()
 }
 
-// Upsert creates or updates workspace metadata.
+// Upsert creates or updates workspace metadata. TODO: remove if not used in future.
 func (r *WorkspaceMetaRepositoryPostgres) Upsert(id Id, key, value string) error {
 	existing, err := r.Get(id, key)
 	if err != nil {
@@ -367,5 +387,6 @@ func (r *WorkspaceMetaRepositoryPostgres) Upsert(id Id, key, value string) error
 	if existing == nil {
 		return r.Create(id, key, value)
 	}
+
 	return r.Update(id, key, value)
 }

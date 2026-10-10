@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -58,6 +59,7 @@ func (r *UserInviteRepositoryPostgres) Create(invite *UserInvite) error {
 	if err != nil {
 		return err
 	}
+
 	invite.Id = id
 
 	_, err = r.db.Exec(
@@ -74,6 +76,7 @@ func (r *UserInviteRepositoryPostgres) Create(invite *UserInvite) error {
 		invite.ExpiresAt,
 		invite.AcceptedAt,
 	)
+
 	return err
 }
 
@@ -100,13 +103,14 @@ func (r *UserInviteRepositoryPostgres) GetById(id Id) (*UserInvite, error) {
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return u, err
 }
 
-// GetByToken returns a user invite by token
+// GetByToken returns a user invite by token. TODO: remove if not used in future.
 func (r *UserInviteRepositoryPostgres) GetByToken(token string) (*UserInvite, error) {
 	u := &UserInvite{}
 	err := r.db.QueryRow(
@@ -129,9 +133,10 @@ func (r *UserInviteRepositoryPostgres) GetByToken(token string) (*UserInvite, er
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return u, err
 }
 
@@ -140,6 +145,7 @@ func (r *UserInviteRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, 
 	if limit <= 0 {
 		limit = 50
 	}
+
 	rows, err := r.db.Query(
 		`SELECT
 			id, email, role, token, status, inviter_user_id, workspace_id,
@@ -155,6 +161,7 @@ func (r *UserInviteRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, 
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var list []*UserInvite
 	for rows.Next() {
@@ -174,16 +181,19 @@ func (r *UserInviteRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, 
 		); err != nil {
 			return nil, err
 		}
+
 		list = append(list, u)
 	}
+
 	return list, rows.Err()
 }
 
-// ListByEmail returns a paginated list of invites for an email address.
+// ListByEmail returns a paginated list of invites for an email address. TODO: remove if not used in future.
 func (r *UserInviteRepositoryPostgres) ListByEmail(email string, limit, offset int) ([]*UserInvite, error) {
 	if limit <= 0 {
 		limit = 50
 	}
+
 	rows, err := r.db.Query(
 		`SELECT
 			id, email, role, token, status, inviter_user_id, workspace_id,
@@ -199,6 +209,7 @@ func (r *UserInviteRepositoryPostgres) ListByEmail(email string, limit, offset i
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var list []*UserInvite
 	for rows.Next() {
@@ -218,8 +229,10 @@ func (r *UserInviteRepositoryPostgres) ListByEmail(email string, limit, offset i
 		); err != nil {
 			return nil, err
 		}
+
 		list = append(list, u)
 	}
+
 	return list, rows.Err()
 }
 
@@ -238,6 +251,7 @@ func (r *UserInviteRepositoryPostgres) ListPendingByEmail(email string) ([]*User
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var list []*UserInvite
 	for rows.Next() {
@@ -257,8 +271,10 @@ func (r *UserInviteRepositoryPostgres) ListPendingByEmail(email string) ([]*User
 		); err != nil {
 			return nil, err
 		}
+
 		list = append(list, u)
 	}
+
 	return list, rows.Err()
 }
 
@@ -276,6 +292,7 @@ func (r *UserInviteRepositoryPostgres) UpdateStatus(id Id, status string, accept
 		time.Now().UTC(),
 		id.String(),
 	)
+
 	return err
 }
 
@@ -293,6 +310,7 @@ func (r *UserInviteRepositoryPostgres) MarkExpiredAsExpired() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return result.RowsAffected()
 }
 
@@ -302,6 +320,7 @@ func (r *UserInviteRepositoryPostgres) Delete(id Id) error {
 		`DELETE FROM user_invites WHERE id = $1`,
 		id.String(),
 	)
+
 	return err
 }
 
@@ -312,6 +331,7 @@ func (r *UserInviteRepositoryPostgres) Count() (int64, error) {
 		`SELECT COUNT(*)
 		FROM user_invites`,
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -324,10 +344,11 @@ func (r *UserInviteRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64
 		WHERE workspace_id = $1`,
 		workspaceId.String(),
 	).Scan(&count)
+
 	return count, err
 }
 
-// CountByEmail returns the total number of user invites for an email address.
+// CountByEmail returns the total number of user invites for an email address. TODO: remove if not used in future.
 func (r *UserInviteRepositoryPostgres) CountByEmail(email string) (int64, error) {
 	var count int64
 	err := r.db.QueryRow(
@@ -336,6 +357,7 @@ func (r *UserInviteRepositoryPostgres) CountByEmail(email string) (int64, error)
 		WHERE email = $1`,
 		email,
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -350,5 +372,6 @@ func (r *UserInviteRepositoryPostgres) CountPendingByEmailInWorkspace(workspaceI
 		email,
 		time.Now().UTC(),
 	).Scan(&count)
+
 	return count, err
 }

@@ -9,7 +9,6 @@ import (
 
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/locale"
-	"github.com/clivern/cognit/middleware"
 	"github.com/clivern/cognit/module"
 
 	"github.com/go-chi/chi/v5"
@@ -19,7 +18,7 @@ import (
 
 // CreateInviteAction creates a new user invite.
 func (a *API) CreateInviteAction(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromContext(r.Context())
+	user, ok := a.GetUser(r)
 	if !ok || user == nil {
 		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
@@ -72,6 +71,7 @@ func (a *API) CreateInviteAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "failed_create_invite"),
 			})
 		}
+
 		return
 	}
 
@@ -117,6 +117,7 @@ func (a *API) ListInvitesAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "failed_list_invites"),
 			})
 		}
+
 		return
 	}
 
@@ -154,7 +155,6 @@ func (a *API) GetInviteAction(w http.ResponseWriter, r *http.Request) {
 		Msg("Getting invite")
 
 	invite, err := a.Invite.GetInvite(db.Id(workspaceId), db.Id(inviteId))
-
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -175,6 +175,7 @@ func (a *API) GetInviteAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "failed_get_invite"),
 			})
 		}
+
 		return
 	}
 
@@ -205,7 +206,6 @@ func (a *API) DeleteInviteAction(w http.ResponseWriter, r *http.Request) {
 		Msg("Deleting invite")
 
 	err := a.Invite.DeleteInvite(db.Id(workspaceId), db.Id(inviteId))
-
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -226,6 +226,7 @@ func (a *API) DeleteInviteAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "failed_delete_invite"),
 			})
 		}
+
 		return
 	}
 

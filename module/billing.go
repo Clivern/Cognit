@@ -207,6 +207,7 @@ func (b *Billing) CreatePortalSession(ctx context.Context, workspaceId db.Id, re
 	if err != nil {
 		return nil, err
 	}
+
 	subscription, err := b.SubscriptionRepository.GetByWorkspaceId(workspaceId)
 	if err != nil {
 		return nil, err
@@ -214,6 +215,7 @@ func (b *Billing) CreatePortalSession(ctx context.Context, workspaceId db.Id, re
 	if subscription == nil {
 		return nil, ErrBillingSubscriptionNotFound
 	}
+
 	customerId := lo.FromPtr(subscription.ProviderCustomerId)
 	if lo.IsEmpty(customerId) {
 		return nil, ErrBillingPortalUnavailable
@@ -310,7 +312,7 @@ func (b *Billing) CreditTokenPurchase(client *stripe.Client, session *stripesdk.
 	return nil
 }
 
-// GetWorkspaceSubscription gets a workspace subscription from the database.
+// GetWorkspaceSubscription gets a workspace subscription from the database. TODO: remove if not used in future.
 func (b *Billing) GetWorkspaceSubscription(workspaceId db.Id) (*db.Subscription, error) {
 	subscription, err := b.SubscriptionRepository.GetByWorkspaceId(workspaceId)
 	if err != nil {
@@ -319,5 +321,6 @@ func (b *Billing) GetWorkspaceSubscription(workspaceId db.Id) (*db.Subscription,
 	if subscription == nil {
 		return nil, ErrBillingSubscriptionNotFound
 	}
+
 	return subscription, nil
 }

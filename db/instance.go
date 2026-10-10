@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -67,8 +68,6 @@ type AgentInstanceMetaRepositoryPostgres struct {
 	db *sql.DB
 }
 
-const agentInstanceColumns = `id, agent_id, instance_id, address, port, datacenter, meta, status, created_at, updated_at`
-
 // NewAgentInstanceRepository returns the repository for agent instances.
 func NewAgentInstanceRepository(db *sql.DB) AgentInstanceRepository {
 	return &AgentInstanceRepositoryPostgres{db: db}
@@ -80,6 +79,7 @@ func (r *AgentInstanceRepositoryPostgres) Create(instance *AgentInstance) error 
 	if err != nil {
 		return err
 	}
+
 	instance.Id = id
 	if instance.Status == "" {
 		instance.Status = AgentInstanceStatusPassing
@@ -101,18 +101,30 @@ func (r *AgentInstanceRepositoryPostgres) Create(instance *AgentInstance) error 
 	).Scan(&instance.CreatedAt, &instance.UpdatedAt)
 }
 
-// GetById returns an agent instance by id.
+// GetById returns an agent instance by id. TODO: remove if not used in future.
 func (r *AgentInstanceRepositoryPostgres) GetById(id Id) (*AgentInstance, error) {
 	instance := &AgentInstance{}
 	err := r.db.QueryRow(
-		`SELECT `+agentInstanceColumns+`
+		`SELECT id, agent_id, instance_id, address, port, datacenter, meta, status, created_at, updated_at
 		FROM agent_instances
 		WHERE id = $1`,
 		id.String(),
-	).Scan(scanAgentInstance(instance)...)
-	if isNotFound(err) {
+	).Scan(
+		&instance.Id,
+		&instance.AgentId,
+		&instance.InstanceId,
+		&instance.Address,
+		&instance.Port,
+		&instance.Datacenter,
+		&instance.Meta,
+		&instance.Status,
+		&instance.CreatedAt,
+		&instance.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return instance, err
 }
 
@@ -120,15 +132,27 @@ func (r *AgentInstanceRepositoryPostgres) GetById(id Id) (*AgentInstance, error)
 func (r *AgentInstanceRepositoryPostgres) GetByAgentAndInstanceId(agentId Id, instanceId string) (*AgentInstance, error) {
 	instance := &AgentInstance{}
 	err := r.db.QueryRow(
-		`SELECT `+agentInstanceColumns+`
+		`SELECT id, agent_id, instance_id, address, port, datacenter, meta, status, created_at, updated_at
 		FROM agent_instances
 		WHERE agent_id = $1 AND instance_id = $2`,
 		agentId.String(),
 		instanceId,
-	).Scan(scanAgentInstance(instance)...)
-	if isNotFound(err) {
+	).Scan(
+		&instance.Id,
+		&instance.AgentId,
+		&instance.InstanceId,
+		&instance.Address,
+		&instance.Port,
+		&instance.Datacenter,
+		&instance.Meta,
+		&instance.Status,
+		&instance.CreatedAt,
+		&instance.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return instance, err
 }
 
@@ -146,86 +170,113 @@ func (r *AgentInstanceRepositoryPostgres) Update(instance *AgentInstance) error 
 		time.Now().UTC(),
 		instance.Id.String(),
 	)
+
 	return err
 }
 
 // Delete removes an agent instance row.
 func (r *AgentInstanceRepositoryPostgres) Delete(id Id) error {
 	_, err := r.db.Exec(`DELETE FROM agent_instances WHERE id = $1`, id.String())
+
 	return err
 }
 
 // ListByAgentId lists instances for an agent.
 func (r *AgentInstanceRepositoryPostgres) ListByAgentId(agentId Id) ([]*AgentInstance, error) {
-	return r.list(
-		`SELECT `+agentInstanceColumns+`
+	rows, err := r.db.Query(
+		`SELECT id, agent_id, instance_id, address, port, datacenter, meta, status, created_at, updated_at
 		FROM agent_instances
 		WHERE agent_id = $1
 		ORDER BY instance_id`,
 		agentId.String(),
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var list []*AgentInstance
+	for rows.Next() {
+		instance := &AgentInstance{}
+		err := rows.Scan(
+			&instance.Id,
+			&instance.AgentId,
+			&instance.InstanceId,
+			&instance.Address,
+			&instance.Port,
+			&instance.Datacenter,
+			&instance.Meta,
+			&instance.Status,
+			&instance.CreatedAt,
+			&instance.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		list = append(list, instance)
+	}
+
+	return list, rows.Err()
 }
 
-// ListLiveByAgentId lists instances still in the discovery pool.
-// The lease is the TTL health check. An instance is dropped when that TTL has
-// expired, or when any check is critical. Warning checks stay in the pool.
+// ListLiveByAgentId lists instances with a live lease and no critical or expired checks.
 func (r *AgentInstanceRepositoryPostgres) ListLiveByAgentId(agentId Id, now time.Time) ([]*AgentInstance, error) {
-	return r.list(
-		`SELECT `+agentInstanceColumns+`
+	rows, err := r.db.Query(
+		`SELECT id, agent_id, instance_id, address, port, datacenter, meta, status, created_at, updated_at
 		FROM agent_instances
 		WHERE agent_id = $1
 			AND EXISTS (
-				SELECT 1 FROM health_checks ttl
-				WHERE ttl.agent_instance_id = agent_instances.id
-					AND ttl.type = $3
-					AND ttl.status <> $4
-					AND ttl.ttl_expires_at > $2
+				SELECT 1 FROM health_checks lease
+				WHERE lease.agent_instance_id = agent_instances.id
+					AND lease.source = $5
+					AND lease.ttl_expires_at > $2
 			)
 			AND NOT EXISTS (
 				SELECT 1 FROM health_checks hc
 				WHERE hc.agent_instance_id = agent_instances.id
-					AND hc.status = $4
+					AND (
+						hc.status = $4
+						OR (hc.type = $3 AND (hc.ttl_expires_at IS NULL OR hc.ttl_expires_at <= $2))
+					)
 			)
 		ORDER BY instance_id`,
 		agentId.String(),
 		now,
 		HealthCheckTypeTTL,
 		HealthCheckStatusCritical,
+		HealthCheckSourceLease,
 	)
-}
-
-func (r *AgentInstanceRepositoryPostgres) list(query string, args ...any) ([]*AgentInstance, error) {
-	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*AgentInstance
 	for rows.Next() {
 		instance := &AgentInstance{}
-		err := rows.Scan(scanAgentInstance(instance)...)
+		err := rows.Scan(
+			&instance.Id,
+			&instance.AgentId,
+			&instance.InstanceId,
+			&instance.Address,
+			&instance.Port,
+			&instance.Datacenter,
+			&instance.Meta,
+			&instance.Status,
+			&instance.CreatedAt,
+			&instance.UpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, instance)
 	}
-	return list, rows.Err()
-}
 
-func scanAgentInstance(instance *AgentInstance) []any {
-	return []any{
-		&instance.Id,
-		&instance.AgentId,
-		&instance.InstanceId,
-		&instance.Address,
-		&instance.Port,
-		&instance.Datacenter,
-		&instance.Meta,
-		&instance.Status,
-		&instance.CreatedAt,
-		&instance.UpdatedAt,
-	}
+	return list, rows.Err()
 }
 
 // NewAgentInstanceMetaRepository returns the repository for agent instance metadata.
@@ -233,12 +284,13 @@ func NewAgentInstanceMetaRepository(db *sql.DB) AgentInstanceMetaRepository {
 	return &AgentInstanceMetaRepositoryPostgres{db: db}
 }
 
-// Create inserts an agent instance metadata row.
+// Create inserts an agent instance metadata row. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
 	if err != nil {
 		return err
 	}
+
 	_, err = r.db.Exec(
 		`INSERT INTO agent_instances_meta (id, agent_instance_id, key, value)
 		VALUES ($1, $2, $3, to_jsonb($4::text))`,
@@ -247,10 +299,11 @@ func (r *AgentInstanceMetaRepositoryPostgres) Create(id Id, key, value string) e
 		key,
 		value,
 	)
+
 	return err
 }
 
-// Get returns agent instance metadata by key.
+// Get returns agent instance metadata by key. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) Get(id Id, key string) (*AgentInstanceMeta, error) {
 	meta := &AgentInstanceMeta{}
 	err := r.db.QueryRow(
@@ -267,13 +320,14 @@ func (r *AgentInstanceMetaRepositoryPostgres) Get(id Id, key string) (*AgentInst
 		&meta.CreatedAt,
 		&meta.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return meta, err
 }
 
-// Update updates an existing agent instance metadata row.
+// Update updates an existing agent instance metadata row. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) Update(id Id, key, value string) error {
 	_, err := r.db.Exec(
 		`UPDATE agent_instances_meta
@@ -284,20 +338,22 @@ func (r *AgentInstanceMetaRepositoryPostgres) Update(id Id, key, value string) e
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// Delete deletes an agent instance metadata row.
+// Delete deletes an agent instance metadata row. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) Delete(id Id, key string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM agent_instances_meta WHERE agent_instance_id = $1 AND key = $2`,
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// ListByAgentInstanceId lists agent instance metadata rows.
+// ListByAgentInstanceId lists agent instance metadata rows. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) ListByAgentInstanceId(id Id) ([]*AgentInstanceMeta, error) {
 	rows, err := r.db.Query(
 		`SELECT id, agent_instance_id, key, value #>> '{}', created_at, updated_at
@@ -309,6 +365,7 @@ func (r *AgentInstanceMetaRepositoryPostgres) ListByAgentInstanceId(id Id) ([]*A
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*AgentInstanceMeta
@@ -325,12 +382,14 @@ func (r *AgentInstanceMetaRepositoryPostgres) ListByAgentInstanceId(id Id) ([]*A
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, meta)
 	}
+
 	return list, rows.Err()
 }
 
-// Upsert creates or updates agent instance metadata.
+// Upsert creates or updates agent instance metadata. TODO: remove if not used in future.
 func (r *AgentInstanceMetaRepositoryPostgres) Upsert(id Id, key, value string) error {
 	existing, err := r.Get(id, key)
 	if err != nil {
@@ -339,5 +398,6 @@ func (r *AgentInstanceMetaRepositoryPostgres) Upsert(id Id, key, value string) e
 	if existing == nil {
 		return r.Create(id, key, value)
 	}
+
 	return r.Update(id, key, value)
 }

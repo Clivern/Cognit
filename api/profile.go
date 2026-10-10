@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/clivern/cognit/locale"
-	"github.com/clivern/cognit/middleware"
 	"github.com/clivern/cognit/module"
 	"github.com/clivern/cognit/pkg/util"
 
@@ -18,7 +17,7 @@ import (
 
 // GetProfileAction returns the current user's profile.
 func (a *API) GetProfileAction(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromContext(r.Context())
+	user, ok := a.GetUser(r)
 	if !ok || user == nil {
 		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
@@ -31,7 +30,6 @@ func (a *API) GetProfileAction(w http.ResponseWriter, r *http.Request) {
 		Msg("Getting profile")
 
 	profile, err := a.Profile.GetProfile(user.Id)
-
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -65,7 +63,7 @@ func (a *API) GetProfileAction(w http.ResponseWriter, r *http.Request) {
 func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 	var req module.UpdateProfileRequest
 
-	user, ok := middleware.GetUserFromContext(r.Context())
+	user, ok := a.GetUser(r)
 	if !ok || user == nil {
 		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
@@ -84,7 +82,6 @@ func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updated, err := a.Profile.UpdateProfile(user.Id, &req)
-
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrFailedUpdateProfile), errors.Is(err, module.ErrUserNotFound):
@@ -104,6 +101,7 @@ func (a *API) UpdateProfileAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "failed_update_profile"),
 			})
 		}
+
 		return
 	}
 

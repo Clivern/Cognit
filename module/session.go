@@ -28,7 +28,7 @@ func NewSessionManager(sessions db.SessionRepository, users db.UserRepository) *
 	}
 }
 
-// CreateSession creates a new session for a user.
+// CreateSession creates a new session for a user. TODO: remove if not used in future.
 func (s *SessionManager) CreateSession(ctx context.Context, userId db.Id, duration time.Duration) (*db.Session, error) {
 	user, err := s.UserRepo.GetById(userId)
 	if err != nil {
@@ -37,6 +37,7 @@ func (s *SessionManager) CreateSession(ctx context.Context, userId db.Id, durati
 	if user == nil {
 		return nil, errors.New("user not found")
 	}
+
 	token, err := util.GenerateSecureToken(32)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,7 @@ func (s *SessionManager) RevokeUserSessions(userId db.Id) error {
 	return s.SessionRepo.DeleteByUserId(userId)
 }
 
-// GetUserSessions retrieves all active sessions for a user.
+// GetUserSessions retrieves all active sessions for a user. TODO: remove if not used in future.
 func (s *SessionManager) GetUserSessions(userId db.Id) ([]*db.Session, error) {
 	sessions, err := s.SessionRepo.GetByUserId(userId)
 	if err != nil {
@@ -109,7 +110,7 @@ func (s *SessionManager) GetUserSessions(userId db.Id) ([]*db.Session, error) {
 	}), nil
 }
 
-// CleanupExpiredSessions removes all expired sessions from the database.
+// CleanupExpiredSessions removes all expired sessions from the database. TODO: remove if not used in future.
 func (s *SessionManager) CleanupExpiredSessions() (int64, error) {
 	return s.SessionRepo.DeleteExpired()
 }

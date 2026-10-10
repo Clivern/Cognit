@@ -11,7 +11,6 @@ import (
 
 	"github.com/clivern/cognit/db"
 	"github.com/clivern/cognit/locale"
-	"github.com/clivern/cognit/middleware"
 	"github.com/clivern/cognit/module"
 	"github.com/clivern/cognit/pkg/stripe"
 
@@ -47,6 +46,7 @@ func (a *API) GetBillingStatusAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "failed_get_billing_status"),
 			})
 		}
+
 		return
 	}
 
@@ -82,6 +82,7 @@ func (a *API) GetBillingUsageAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "failed_get_billing_usage"),
 			})
 		}
+
 		return
 	}
 
@@ -97,7 +98,7 @@ func (a *API) CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	user, ok := middleware.GetUserFromContext(r.Context())
+	user, ok := a.GetUser(r)
 	if !ok || user == nil {
 		a.WriteJSON(w, http.StatusUnauthorized, map[string]any{
 			"errorMessage": locale.TR(r, "not_authenticated"),
@@ -120,7 +121,6 @@ func (a *API) CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request
 		fmt.Sprintf("%s/billing?checkout=success", viper.GetString("app.url")),
 		fmt.Sprintf("%s/billing?checkout=cancel", viper.GetString("app.url")),
 	)
-
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -147,6 +147,7 @@ func (a *API) CreateBillingCheckoutAction(w http.ResponseWriter, r *http.Request
 				"errorMessage": locale.TR(r, "failed_create_billing_checkout_session"),
 			})
 		}
+
 		return
 	}
 
@@ -165,7 +166,6 @@ func (a *API) CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) 
 		db.Id(workspaceId),
 		fmt.Sprintf("%s/billing", viper.GetString("app.url")),
 	)
-
 	if err != nil {
 		switch {
 		case errors.Is(err, module.ErrWorkspaceNotFound):
@@ -192,6 +192,7 @@ func (a *API) CreateBillingPortalAction(w http.ResponseWriter, r *http.Request) 
 				"errorMessage": locale.TR(r, "failed_create_billing_portal_session"),
 			})
 		}
+
 		return
 	}
 
@@ -235,6 +236,7 @@ func (a *API) StripeWebhookAction(w http.ResponseWriter, r *http.Request) {
 				"errorMessage": locale.TR(r, "invalid_stripe_webhook"),
 			})
 		}
+
 		return
 	}
 

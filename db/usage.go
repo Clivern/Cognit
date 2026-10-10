@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -41,12 +42,13 @@ func NewUsageRepository(db *sql.DB) UsageRepository {
 	return &UsageRepositoryPostgres{db: db}
 }
 
-// Create inserts an usage row.
+// Create inserts an usage row. TODO: remove if not used in future.
 func (r *UsageRepositoryPostgres) Create(usage *Usage) error {
 	id, err := NewId()
 	if err != nil {
 		return err
 	}
+
 	usage.Id = id
 
 	err = r.db.QueryRow(
@@ -64,10 +66,11 @@ func (r *UsageRepositoryPostgres) Create(usage *Usage) error {
 		usage.PeriodEnd,
 		usage.Meta,
 	).Scan(&usage.CreatedAt, &usage.UpdatedAt)
+
 	return err
 }
 
-// GetById returns an usage by id.
+// GetById returns an usage by id. TODO: remove if not used in future.
 func (r *UsageRepositoryPostgres) GetById(id Id) (*Usage, error) {
 	item := &Usage{}
 	err := r.db.QueryRow(
@@ -89,13 +92,14 @@ func (r *UsageRepositoryPostgres) GetById(id Id) (*Usage, error) {
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return item, err
 }
 
-// ListByWorkspaceId lists usage rows by workspace id.
+// ListByWorkspaceId lists usage rows by workspace id. TODO: remove if not used in future.
 func (r *UsageRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offset int) ([]*Usage, error) {
 	rows, err := r.db.Query(
 		`SELECT
@@ -112,6 +116,7 @@ func (r *UsageRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offse
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*Usage
@@ -131,12 +136,14 @@ func (r *UsageRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offse
 		); err != nil {
 			return nil, err
 		}
+
 		list = append(list, item)
 	}
+
 	return list, rows.Err()
 }
 
-// CountByWorkspaceId counts usage rows by workspace id.
+// CountByWorkspaceId counts usage rows by workspace id. TODO: remove if not used in future.
 func (r *UsageRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64, error) {
 	var count int64
 	err := r.db.QueryRow(
@@ -145,6 +152,7 @@ func (r *UsageRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64, err
 		WHERE workspace_id = $1`,
 		workspaceId.String(),
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -161,9 +169,10 @@ func (r *UsageRepositoryPostgres) GetQuantityByPeriod(workspaceId Id, utype stri
 		utype,
 		pstart,
 	).Scan(&quantity)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return 0, nil
 	}
+
 	return quantity, err
 }
 
@@ -195,5 +204,6 @@ func (r *UsageRepositoryPostgres) IncrementByPeriod(workspaceId Id, utype string
 		pstart,
 		pend,
 	)
+
 	return err
 }

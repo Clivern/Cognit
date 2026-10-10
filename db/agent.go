@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -70,6 +71,7 @@ func (r *AgentRepositoryPostgres) Create(agent *Agent) error {
 	if err != nil {
 		return err
 	}
+
 	agent.Id = id
 
 	return r.db.QueryRow(
@@ -103,9 +105,10 @@ func (r *AgentRepositoryPostgres) GetById(id Id) (*Agent, error) {
 		&agent.CreatedAt,
 		&agent.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return agent, err
 }
 
@@ -128,9 +131,10 @@ func (r *AgentRepositoryPostgres) GetByWorkspaceAndName(workspaceId Id, name str
 		&agent.CreatedAt,
 		&agent.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return agent, err
 }
 
@@ -147,12 +151,14 @@ func (r *AgentRepositoryPostgres) Update(agent *Agent) error {
 		time.Now().UTC(),
 		agent.Id.String(),
 	)
+
 	return err
 }
 
 // Delete removes an agent row.
 func (r *AgentRepositoryPostgres) Delete(id Id) error {
 	_, err := r.db.Exec(`DELETE FROM agents WHERE id = $1`, id.String())
+
 	return err
 }
 
@@ -171,6 +177,7 @@ func (r *AgentRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offse
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*Agent
@@ -189,8 +196,10 @@ func (r *AgentRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, offse
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, agent)
 	}
+
 	return list, rows.Err()
 }
 
@@ -201,6 +210,7 @@ func (r *AgentRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64, err
 		`SELECT COUNT(*) FROM agents WHERE workspace_id = $1`,
 		workspaceId.String(),
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -209,12 +219,13 @@ func NewAgentMetaRepository(db *sql.DB) AgentMetaRepository {
 	return &AgentMetaRepositoryPostgres{db: db}
 }
 
-// Create inserts an agent metadata row.
+// Create inserts an agent metadata row. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
 	if err != nil {
 		return err
 	}
+
 	_, err = r.db.Exec(
 		`INSERT INTO agents_meta (id, agent_id, key, value)
 		VALUES ($1, $2, $3, to_jsonb($4::text))`,
@@ -223,10 +234,11 @@ func (r *AgentMetaRepositoryPostgres) Create(id Id, key, value string) error {
 		key,
 		value,
 	)
+
 	return err
 }
 
-// Get returns agent metadata by key.
+// Get returns agent metadata by key. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) Get(id Id, key string) (*AgentMeta, error) {
 	meta := &AgentMeta{}
 	err := r.db.QueryRow(
@@ -243,13 +255,14 @@ func (r *AgentMetaRepositoryPostgres) Get(id Id, key string) (*AgentMeta, error)
 		&meta.CreatedAt,
 		&meta.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return meta, err
 }
 
-// Update updates an existing agent metadata row.
+// Update updates an existing agent metadata row. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) Update(id Id, key, value string) error {
 	_, err := r.db.Exec(
 		`UPDATE agents_meta
@@ -260,20 +273,22 @@ func (r *AgentMetaRepositoryPostgres) Update(id Id, key, value string) error {
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// Delete deletes an agent metadata row.
+// Delete deletes an agent metadata row. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) Delete(id Id, key string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM agents_meta WHERE agent_id = $1 AND key = $2`,
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// ListByAgentId lists agent metadata rows.
+// ListByAgentId lists agent metadata rows. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) ListByAgentId(id Id) ([]*AgentMeta, error) {
 	rows, err := r.db.Query(
 		`SELECT id, agent_id, key, value #>> '{}', created_at, updated_at
@@ -285,6 +300,7 @@ func (r *AgentMetaRepositoryPostgres) ListByAgentId(id Id) ([]*AgentMeta, error)
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*AgentMeta
@@ -301,12 +317,14 @@ func (r *AgentMetaRepositoryPostgres) ListByAgentId(id Id) ([]*AgentMeta, error)
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, meta)
 	}
+
 	return list, rows.Err()
 }
 
-// Upsert creates or updates agent metadata.
+// Upsert creates or updates agent metadata. TODO: remove if not used in future.
 func (r *AgentMetaRepositoryPostgres) Upsert(id Id, key, value string) error {
 	existing, err := r.Get(id, key)
 	if err != nil {
@@ -315,5 +333,6 @@ func (r *AgentMetaRepositoryPostgres) Upsert(id Id, key, value string) error {
 	if existing == nil {
 		return r.Create(id, key, value)
 	}
+
 	return r.Update(id, key, value)
 }

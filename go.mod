@@ -1,9 +1,9 @@
 module github.com/clivern/cognit
 
-go 1.27.1
+go 1.27.2
 
 require (
-	github.com/OpenRouterTeam/go-sdk v0.9.33
+	github.com/OpenRouterTeam/go-sdk v0.9.35
 	github.com/drone/envsubst v1.0.3
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-playground/validator/v10 v10.30.5
@@ -12,15 +12,15 @@ require (
 	github.com/leonelquinteros/gotext v1.7.2
 	github.com/lib/pq v1.12.3
 	github.com/nats-io/nats.go v1.54.0
-	github.com/prometheus/client_golang v1.24.1
-	github.com/resend/resend-go/v4 v4.8.1
+	github.com/prometheus/client_golang v1.25.0
+	github.com/resend/resend-go/v4 v4.8.2
 	github.com/rs/zerolog v1.35.1
 	github.com/samber/lo v1.53.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/stripe/stripe-go/v87 v87.0.0
-	golang.org/x/crypto v0.57.0
+	golang.org/x/crypto v0.58.0
 )
 
 require (
@@ -58,8 +58,8 @@ require (
 	github.com/spyzhov/ajson v0.9.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/net v0.59.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )

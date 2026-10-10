@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -53,12 +54,13 @@ func NewTrafficRepository(db *sql.DB) TrafficRepository {
 	return &TrafficRepositoryPostgres{db: db}
 }
 
-// Create inserts a traffic call row.
+// Create inserts a traffic call row. TODO: remove if not used in future.
 func (r *TrafficRepositoryPostgres) Create(call *TrafficCall) error {
 	id, err := NewId()
 	if err != nil {
 		return err
 	}
+
 	call.Id = id
 
 	return r.db.QueryRow(
@@ -108,9 +110,10 @@ func (r *TrafficRepositoryPostgres) GetById(id Id) (*TrafficCall, error) {
 		&call.CreatedAt,
 		&call.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return call, err
 }
 
@@ -132,6 +135,7 @@ func (r *TrafficRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, off
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []*TrafficCall
@@ -155,8 +159,10 @@ func (r *TrafficRepositoryPostgres) ListByWorkspaceId(workspaceId Id, limit, off
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, call)
 	}
+
 	return list, rows.Err()
 }
 
@@ -167,5 +173,6 @@ func (r *TrafficRepositoryPostgres) CountByWorkspaceId(workspaceId Id) (int64, e
 		`SELECT COUNT(*) FROM traffic WHERE workspace_id = $1`,
 		workspaceId.String(),
 	).Scan(&count)
+
 	return count, err
 }

@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -35,7 +36,7 @@ func NewKeyValueRepository(db *sql.DB) KeyValueRepository {
 	return &KeyValueRepositoryPostgres{db: db}
 }
 
-// Upsert inserts or replaces a key/value row.
+// Upsert inserts or replaces a key/value row. TODO: remove if not used in future.
 func (r *KeyValueRepositoryPostgres) Upsert(item *KeyValue) error {
 	id, err := NewId()
 	if err != nil {
@@ -61,7 +62,7 @@ func (r *KeyValueRepositoryPostgres) Upsert(item *KeyValue) error {
 	)
 }
 
-// Get returns a non-expired value for key. A null expires_at never expires.
+// Get returns a non-expired value for key. A null expires_at never expires. TODO: remove if not used in future.
 func (r *KeyValueRepositoryPostgres) Get(key string) (*KeyValue, error) {
 	item := &KeyValue{}
 	err := r.db.QueryRow(
@@ -78,20 +79,21 @@ func (r *KeyValueRepositoryPostgres) Get(key string) (*KeyValue, error) {
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 
 	return item, err
 }
 
-// Delete removes a key/value row.
+// Delete removes a key/value row. TODO: remove if not used in future.
 func (r *KeyValueRepositoryPostgres) Delete(key string) error {
 	_, err := r.db.Exec(`DELETE FROM kv WHERE key = $1`, key)
+
 	return err
 }
 
-// DeleteExpired removes rows that have passed their expiry.
+// DeleteExpired removes rows that have passed their expiry. TODO: remove if not used in future.
 func (r *KeyValueRepositoryPostgres) DeleteExpired() (int64, error) {
 	result, err := r.db.Exec(
 		`DELETE FROM kv WHERE expires_at IS NOT NULL AND expires_at <= $1`,

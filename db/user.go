@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/samber/lo"
@@ -29,8 +30,10 @@ const (
 	UserThemeDark      = "dark"
 )
 
+// BotUserId is the ID of the platform bot user.
 const BotUserId Id = "00000000-0000-0000-0000-000000000000"
 
+// BotUserName is the name of the platform bot user.
 const BotUserName = "Cognit"
 
 // User is the DB row for a user.
@@ -111,12 +114,15 @@ func (r *UserRepositoryPostgres) Create(user *User) error {
 		if err != nil {
 			return err
 		}
+
 		user.Id = id
 	}
 
 	_, err := r.db.Exec(
-		`INSERT INTO users
-		(id, name, email, pwd_hash, provider, provider_user_id, role, is_active, is_email_verified, email_verify_token, last_login_at, language, theme)
+		`INSERT INTO users (
+			id, name, email, pwd_hash, provider, provider_user_id, role, is_active,
+			is_email_verified, email_verify_token, last_login_at, language, theme
+		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
 		user.Id.String(),
 		user.Name,
@@ -132,6 +138,7 @@ func (r *UserRepositoryPostgres) Create(user *User) error {
 		user.Language,
 		user.Theme,
 	)
+
 	return err
 }
 
@@ -162,13 +169,14 @@ func (r *UserRepositoryPostgres) GetById(id Id) (*User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return user, err
 }
 
-// GetBot returns the platform bot user.
+// GetBot returns the platform bot user. TODO: remove if not used in future.
 func (r *UserRepositoryPostgres) GetBot() (*User, error) {
 	return r.GetById(BotUserId)
 }
@@ -178,6 +186,7 @@ func (r *UserRepositoryPostgres) GetByAPIKey(apiKey string) (*User, error) {
 	if lo.IsEmpty(apiKey) {
 		return nil, nil
 	}
+
 	user := &User{}
 	err := r.db.QueryRow(
 		`SELECT
@@ -205,9 +214,10 @@ func (r *UserRepositoryPostgres) GetByAPIKey(apiKey string) (*User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return user, err
 }
 
@@ -238,9 +248,10 @@ func (r *UserRepositoryPostgres) GetByEmail(email string) (*User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return user, err
 }
 
@@ -272,9 +283,10 @@ func (r *UserRepositoryPostgres) GetByProvider(provider, providerUserId string) 
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return user, err
 }
 
@@ -312,6 +324,7 @@ func (r *UserRepositoryPostgres) Update(user *User) error {
 		time.Now().UTC(),
 		user.Id.String(),
 	)
+
 	return err
 }
 
@@ -328,19 +341,21 @@ func (r *UserRepositoryPostgres) UpdateLastLogin(id Id) error {
 		now,
 		id.String(),
 	)
+
 	return err
 }
 
-// Delete removes a user
+// Delete removes a user. TODO: remove if not used in future.
 func (r *UserRepositoryPostgres) Delete(id Id) error {
 	_, err := r.db.Exec(
 		`DELETE FROM users WHERE id = $1`,
 		id.String(),
 	)
+
 	return err
 }
 
-// List returns a list of users
+// List returns a list of users. TODO: remove if not used in future.
 func (r *UserRepositoryPostgres) List(limit, offset int) ([]*User, error) {
 	rows, err := r.db.Query(
 		`SELECT
@@ -355,6 +370,7 @@ func (r *UserRepositoryPostgres) List(limit, offset int) ([]*User, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var list []*User
 	for rows.Next() {
@@ -378,8 +394,10 @@ func (r *UserRepositoryPostgres) List(limit, offset int) ([]*User, error) {
 		); err != nil {
 			return nil, err
 		}
+
 		list = append(list, u)
 	}
+
 	return list, rows.Err()
 }
 
@@ -390,6 +408,7 @@ func (r *UserRepositoryPostgres) Count() (int64, error) {
 		`SELECT COUNT(*)
 		FROM users`,
 	).Scan(&count)
+
 	return count, err
 }
 
@@ -398,7 +417,7 @@ func NewUserMetaRepository(db *sql.DB) UserMetaRepository {
 	return &UserMetaRepositoryPostgres{db: db}
 }
 
-// Create inserts a user meta
+// Create inserts a user meta. TODO: remove if not used in future.
 func (r *UserMetaRepositoryPostgres) Create(id Id, key, value string) error {
 	metaId, err := NewId()
 	if err != nil {
@@ -413,10 +432,11 @@ func (r *UserMetaRepositoryPostgres) Create(id Id, key, value string) error {
 		key,
 		value,
 	)
+
 	return err
 }
 
-// Get returns a user meta
+// Get returns a user meta. TODO: remove if not used in future.
 func (r *UserMetaRepositoryPostgres) Get(id Id, key string) (*UserMeta, error) {
 	meta := &UserMeta{}
 	err := r.db.QueryRow(
@@ -433,13 +453,14 @@ func (r *UserMetaRepositoryPostgres) Get(id Id, key string) (*UserMeta, error) {
 		&meta.CreatedAt,
 		&meta.UpdatedAt,
 	)
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return meta, err
 }
 
-// Update updates a user meta
+// Update updates a user meta. TODO: remove if not used in future.
 func (r *UserMetaRepositoryPostgres) Update(id Id, key, value string) error {
 	_, err := r.db.Exec(
 		`UPDATE users_meta
@@ -452,20 +473,22 @@ func (r *UserMetaRepositoryPostgres) Update(id Id, key, value string) error {
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// Delete removes a user meta
+// Delete removes a user meta. TODO: remove if not used in future.
 func (r *UserMetaRepositoryPostgres) Delete(id Id, key string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM users_meta WHERE user_id = $1 AND key = $2`,
 		id.String(),
 		key,
 	)
+
 	return err
 }
 
-// ListByUser returns a list of user meta
+// ListByUser returns a list of user meta. TODO: remove if not used in future.
 func (r *UserMetaRepositoryPostgres) ListByUser(id Id) ([]*UserMeta, error) {
 	rows, err := r.db.Query(
 		`SELECT id, key, value, user_id, created_at, updated_at
@@ -477,6 +500,7 @@ func (r *UserMetaRepositoryPostgres) ListByUser(id Id) ([]*UserMeta, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 	var list []*UserMeta
 	for rows.Next() {
@@ -492,12 +516,14 @@ func (r *UserMetaRepositoryPostgres) ListByUser(id Id) ([]*UserMeta, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		list = append(list, m)
 	}
+
 	return list, rows.Err()
 }
 
-// Upsert upserts a user meta
+// Upsert upserts a user meta. TODO: remove if not used in future.
 func (r *UserMetaRepositoryPostgres) Upsert(id Id, key, value string) error {
 	existing, err := r.Get(id, key)
 	if err != nil {
@@ -506,5 +532,6 @@ func (r *UserMetaRepositoryPostgres) Upsert(id Id, key, value string) error {
 	if existing == nil {
 		return r.Create(id, key, value)
 	}
+
 	return r.Update(id, key, value)
 }

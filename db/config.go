@@ -5,6 +5,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -48,6 +49,7 @@ func (r *ConfigRepositoryPostgres) Create(key, value string) error {
 		VALUES ($1, $2, to_jsonb($3::text))`,
 		id.String(), key, value,
 	)
+
 	return err
 }
 
@@ -61,9 +63,10 @@ func (r *ConfigRepositoryPostgres) Get(key string) (*Config, error) {
 		key,
 	).Scan(&o.Id, &o.Key, &o.Value, &o.CreatedAt, &o.UpdatedAt)
 
-	if isNotFound(err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	return o, err
 }
 
@@ -77,19 +80,21 @@ func (r *ConfigRepositoryPostgres) Update(key, value string) error {
 		WHERE key = $3`,
 		value, time.Now().UTC(), key,
 	)
+
 	return err
 }
 
-// Delete removes a config
+// Delete removes a config. TODO: remove if not used in future.
 func (r *ConfigRepositoryPostgres) Delete(key string) error {
 	_, err := r.db.Exec(
 		`DELETE FROM configs WHERE key = $1`,
 		key,
 	)
+
 	return err
 }
 
-// List returns a list of configs
+// List returns a list of configs. TODO: remove if not used in future.
 func (r *ConfigRepositoryPostgres) List() ([]*Config, error) {
 	rows, err := r.db.Query(
 		`SELECT id, key, value #>> '{}', created_at, updated_at
@@ -99,6 +104,7 @@ func (r *ConfigRepositoryPostgres) List() ([]*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var options []*Config
@@ -108,6 +114,7 @@ func (r *ConfigRepositoryPostgres) List() ([]*Config, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		options = append(options, o)
 	}
 
