@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	github.com/OpenRouterTeam/go-sdk v0.9.33
 	github.com/drone/envsubst v1.0.3
-	github.com/go-chi/chi/v5 v5.3.2
+	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/google/uuid v1.6.0
 	github.com/imroc/req/v3 v3.61.0
