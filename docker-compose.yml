@@ -1,0 +1,84 @@
+name: cognit
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-cognit}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cognit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nats:
+    image: nats:2-alpine
+    restart: unless-stopped
+
+  migrate:
+    image: ${COGNIT_IMAGE:-registry.digitalocean.com/cognit/cognit:main}
+    restart: "no"
+    command: ["migrate", "up", "-c", "/app/configs/config.yml"]
+    environment:
+      COGNIT_SERVER_URL: ${COGNIT_SERVER_URL:-http://localhost}
+      COGNIT_DATABASE_HOST: postgres
+      COGNIT_DATABASE_PORT: "5432"
+      COGNIT_DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
+      COGNIT_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
+    volumes:
+      - ./etc/config/config.yml:/app/configs/config.yml:ro
+      - cognit_data:/app/var
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cognit:
+    image: ${COGNIT_IMAGE:-registry.digitalocean.com/cognit/cognit:main}
+    restart: unless-stopped
+    command: ["server", "-c", "/app/configs/config.yml"]
+    environment:
+      COGNIT_SERVER_URL: ${COGNIT_SERVER_URL:-http://localhost}
+      COGNIT_DATABASE_HOST: postgres
+      COGNIT_DATABASE_PORT: "5432"
+      COGNIT_DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
+      COGNIT_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      COGNIT_DATABASE_NAME: ${POSTGRES_DB:-cognit}
+      COGNIT_BROKER_URL: nats://nats:4222
+      COGNIT_AI_PROVIDER: ${COGNIT_AI_PROVIDER:-muse}
+      COGNIT_AI_API_KEY: ${COGNIT_AI_API_KEY:-}
+      COGNIT_AI_CHAT_MODEL: ${COGNIT_AI_CHAT_MODEL:-muse-wonder-1.0}
+      COGNIT_RESEND_API_KEY: ${COGNIT_RESEND_API_KEY:-}
+      COGNIT_STRIPE_SECRET_KEY: ${COGNIT_STRIPE_SECRET_KEY:-}
+      COGNIT_STRIPE_WEBHOOK_SECRET: ${COGNIT_STRIPE_WEBHOOK_SECRET:-}
+    volumes:
+      - ./etc/config/config.yml:/app/configs/config.yml:ro
+      - cognit_data:/app/var
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    volumes:
+      - ./etc/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - cognit
+
+volumes:
+  postgres_data:
+  cognit_data:
