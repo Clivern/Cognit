@@ -17,6 +17,39 @@
 
 Cognit is a multi-tenant gateway and service discovery registry for AI agents, APIs and MCP servers. Register your AI agent, let them discover each other, and route every call through one gateway that handles load balancing, health checks and policy.
 
+> Built for the Meta hackathon
+
+### Setup
+
+Prerequisites: Go 1.27, Node 25 (for the web dashboard), plus Postgres and NATS.
+
+To run locally
+
+```bash
+# 1. Start Postgres and NATS
+make deps
+
+# 2. Copy and Adjust configs
+cp config.dist.yml config.test.yml
+
+# 3. Run the app
+make run
+```
+
+To run the demo agents
+
+```bash
+cd demo && ./run.sh
+```
+
+To stop the local dependencies later
+
+```bash
+make deps-down
+```
+
+This stops Postgres and NATS, then `container system stop`.
+
 
 ### Versioning
 
