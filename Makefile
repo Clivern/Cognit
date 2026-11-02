@@ -122,6 +122,15 @@ deps:
 	./bin/nats start
 
 
+## deps-down: Stop local Postgres and NATS
+.PHONY: deps-down
+deps-down:
+	@echo ">> ============= Stop Local Dependencies ============= <<"
+	./bin/pgsql stop
+	./bin/nats stop
+	container system stop
+
+
 ## run: Run the Server
 .PHONY: run
 run:
